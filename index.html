@@ -121,19 +121,7 @@
         });
     }
 
-    // Optional: Redirect if already logged in
-    auth.onAuthStateChanged(user => {
-      if (user) {
-        db.ref("users/" + user.uid).once("value").then(snapshot => {
-          const userData = snapshot.val();
-          if (userData?.role === "teacher") {
-            window.location.href = "teacher.html";
-          } else if (userData?.role === "driver") {
-            window.location.href = "driver.html";
-          }
-        });
-      }
-    });
+    
   </script>
 
 </body>
