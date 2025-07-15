@@ -96,6 +96,41 @@
         margin-top: 10px;
       }
     }
+    .student-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 16px;
+  max-height: 420px;
+  overflow-y: auto;
+  padding-right: 10px;
+}
+
+.student-card {
+  background-color: #1c1c1c;
+  padding: 16px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.student-card .name {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.student-card .analytics {
+  font-size: 13px;
+  color: #bbb;
+  margin-bottom: 10px;
+}
+
+.student-card .actions button {
+  margin-right: 6px;
+}
+
   </style>
 </head>
 <body>
@@ -131,7 +166,8 @@
 
   <div class="card">
     <h3>👥 Student List</h3>
-    <div id="studentContainer">Loading...</div>
+    <div id="studentContainer" class="student-grid">Loading...</div>
+
   </div>
 
   <div class="card">
@@ -140,6 +176,15 @@
     <button onclick="uploadHomework()">Upload Homework</button>
     <div id="homeworkStatus" class="status-msg"></div>
   </div>
+<!-- Same <head> and styles, only body and scripts are updated -->
+<!-- ... Keep your <head> as-is ... -->
+
+<!-- Inside body: -->
+<div class="card">
+  <h3>👥 Student List</h3>
+  <button onclick="downloadCSV()">⬇️ Download Student List</button>
+  <div id="studentContainer" class="student-grid">Loading...</div>
+</div>
 
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -212,38 +257,91 @@
       loadStudents(classId);
     }
 
-    function loadStudents(classId) {
-      const container = document.getElementById("studentContainer");
-      db.ref("classes/" + classId + "/students").once("value").then(snapshot => {
-        const students = snapshot.val();
-        if (!students) {
-          container.innerHTML = "<p>No students found in this class.</p>";
-          return;
-        }
+    
+  // Your existing firebaseConfig, firebase.initializeApp, auth and db remain same
+  // Continue after auth.onAuthStateChanged logic
 
-        container.innerHTML = "";
-        Object.entries(students).forEach(([id, name]) => {
-          const div = document.createElement("div");
-          div.className = "student-item";
-          div.innerHTML = `
-            <span>${name}</span>
-            <span>
+  function loadStudents(classId) {
+    const container = document.getElementById("studentContainer");
+    container.innerHTML = "<p>Loading students...</p>";
+
+    db.ref("classes/" + classId + "/students").once("value").then(snapshot => {
+      const students = snapshot.val();
+      if (!students) {
+        container.innerHTML = "<p>No students found in this class.</p>";
+        return;
+      }
+
+      container.innerHTML = "";
+      Object.entries(students).forEach(([id, name]) => {
+        const card = document.createElement("div");
+        card.className = "student-card";
+
+        db.ref(`attendance/${classId}`).once("value").then(attSnap => {
+          const attendanceData = attSnap.val() || {};
+          let presentCount = 0, absentCount = 0;
+
+          Object.values(attendanceData).forEach(day => {
+            if (day[id] === "Present") presentCount++;
+            if (day[id] === "Absent") absentCount++;
+          });
+
+          card.innerHTML = `
+            <div class="name">${name}</div>
+            <div class="analytics">✅ Present: ${presentCount} | ❌ Absent: ${absentCount}</div>
+            <div class="actions">
               <button onclick="markAttendance('${id}', '${name}', 'Present')">Present</button>
               <button onclick="markAttendance('${id}', '${name}', 'Absent')">Absent</button>
-            </span>
+              <button style="background-color:#e74c3c" onclick="deleteStudent('${id}', '${name}')">Delete</button>
+            </div>
           `;
-          container.appendChild(div);
+          container.appendChild(card);
         });
       });
-    }
+    });
+  }
 
-    function markAttendance(studentId, studentName, status) {
-      const today = new Date().toISOString().split('T')[0];
-      db.ref(`attendance/${assignedClass}/${today}/${studentId}`).set(status)
+  function markAttendance(studentId, studentName, status) {
+    const today = new Date().toISOString().split('T')[0];
+    db.ref(`attendance/${assignedClass}/${today}/${studentId}`).set(status)
+      .then(() => {
+        alert(`${studentName} marked as ${status}`);
+        loadStudents(assignedClass); // Refresh UI
+      });
+  }
+
+  function deleteStudent(studentId, studentName) {
+    if (confirm(`Are you sure you want to remove ${studentName}?`)) {
+      db.ref(`classes/${assignedClass}/students/${studentId}`).remove()
         .then(() => {
-          alert(`${studentName} marked as ${status}`);
+          alert(`${studentName} deleted`);
+          loadStudents(assignedClass);
         });
     }
+  }
+
+  function downloadCSV() {
+    db.ref("classes/" + assignedClass + "/students").once("value").then(snapshot => {
+      const students = snapshot.val();
+      if (!students) return;
+
+      let csv = "Student ID,Student Name\n";
+      for (const [id, name] of Object.entries(students)) {
+        csv += `${id},${name}\n`;
+      }
+
+      const blob = new Blob([csv], { type: "text/csv" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${assignedClass}_students.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    });
+  }
+
+
 
     function uploadHomework() {
       const homework = document.getElementById("homeworkText").value.trim();
