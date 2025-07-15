@@ -1,49 +1,69 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>School Staff Login</title>
+  <title>Login | School Staff Panel</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f2f2f2;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
+    * {
+      box-sizing: border-box;
       margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
 
-    .login-box {
-      background: white;
+    body {
+      height: 100vh;
+      background: linear-gradient(135deg, #74ebd5, #acb6e5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .login-container {
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(10px);
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
       padding: 40px;
-      border-radius: 10px;
-      box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-      width: 350px;
+      width: 100%;
+      max-width: 400px;
       text-align: center;
+      color: #fff;
     }
 
     h2 {
       margin-bottom: 20px;
+      font-size: 28px;
     }
 
     input {
       width: 100%;
-      padding: 10px;
+      padding: 12px 16px;
       margin: 10px 0;
-      border: 1px solid #ccc;
-      border-radius: 6px;
+      border: none;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.2);
+      color: #fff;
+      font-size: 16px;
+      outline: none;
+    }
+
+    input::placeholder {
+      color: #ddd;
     }
 
     button {
-      padding: 10px;
       width: 100%;
-      background-color: #007bff;
-      color: white;
+      padding: 12px;
+      margin-top: 15px;
       border: none;
-      border-radius: 6px;
-      cursor: pointer;
+      border-radius: 8px;
+      background-color: #007BFF;
+      color: white;
       font-size: 16px;
+      cursor: pointer;
+      transition: background 0.3s ease;
     }
 
     button:hover {
@@ -51,14 +71,15 @@
     }
 
     #errorMsg {
-      color: red;
-      margin-top: 10px;
+      margin-top: 12px;
+      color: #ffcdd2;
+      font-size: 14px;
     }
   </style>
 </head>
 <body>
 
-  <div class="login-box">
+  <div class="login-container">
     <h2>🔐 Staff Login</h2>
     <input type="email" id="email" placeholder="Email" />
     <input type="password" id="password" placeholder="Password" />
@@ -66,13 +87,12 @@
     <p id="errorMsg"></p>
   </div>
 
-  <!-- Firebase SDK -->
+  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
   <script>
-    // Firebase Config
     const firebaseConfig = {
       apiKey: "AIzaSyCfffexgO1rf6m6EteNNtFb_kZnRqqTUBM",
       authDomain: "schoolmanagementsystem-32895.firebaseapp.com",
@@ -83,7 +103,6 @@
       appId: "1:837516759841:web:31d6666b15037082fa6460"
     };
 
-    // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.database();
@@ -102,27 +121,24 @@
       auth.signInWithEmailAndPassword(email, password)
         .then(userCredential => {
           const uid = userCredential.user.uid;
-          return db.ref("users/" + uid).once("value");
+          return firebase.database().ref("users/" + uid).once("value");
         })
         .then(snapshot => {
           const userData = snapshot.val();
-          if (!userData) throw new Error("User record not found in database");
+          if (!userData) throw new Error("User record not found");
 
           if (userData.role === "teacher") {
             window.location.href = "teacher.html";
           } else if (userData.role === "driver") {
             window.location.href = "driver.html";
           } else {
-            throw new Error("Unknown user role");
+            alert("Unknown role");
           }
         })
         .catch(err => {
           errorBox.textContent = "Login failed: " + err.message;
         });
     }
-
-    
   </script>
-
 </body>
 </html>
