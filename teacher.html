@@ -1,52 +1,100 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <title>Teacher Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --bg: #121212;
+      --card: #1e1e1e;
+      --text: #e0e0e0;
+      --primary: #00bcd4;
+      --accent: #0097a7;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
     body {
-      font-family: Arial, sans-serif;
-      margin: 0; padding: 20px;
-      background: #f7f9fc;
-    }
-    h1 { color: #333; }
-    .info-box, .student-list, .homework-box {
-      background: white;
+      margin: 0;
       padding: 20px;
-      margin-bottom: 20px;
-      border-radius: 10px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
     }
+
+    h1 {
+      font-size: 28px;
+      margin-bottom: 10px;
+    }
+
+    .card {
+      background-color: var(--card);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 24px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.4);
+    }
+
+    button {
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    button:hover {
+      background-color: var(--accent);
+    }
+
+    input, textarea, select {
+      width: 100%;
+      padding: 10px;
+      margin-top: 8px;
+      background-color: #222;
+      border: 1px solid #444;
+      border-radius: 6px;
+      color: var(--text);
+    }
+
+    .logout-btn {
+      float: right;
+      margin-top: -40px;
+    }
+
     .student-item {
       display: flex;
       justify-content: space-between;
-      margin: 8px 0;
-      border-bottom: 1px solid #eee;
-      padding-bottom: 6px;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid #333;
     }
-    button {
-      padding: 6px 10px;
-      margin-left: 5px;
-      border: none;
-      background: #007BFF;
-      color: white;
-      border-radius: 4px;
-      cursor: pointer;
+
+    .student-item:last-child {
+      border-bottom: none;
     }
-    button:hover {
-      background: #0056b3;
-    }
-    textarea, input, select {
-      width: 100%;
-      padding: 10px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
+
+    .status-msg {
       margin-top: 10px;
-      resize: vertical;
+      font-size: 14px;
     }
-    .logout-btn {
-      float: right;
-      margin-top: -60px;
+
+    select {
+      background-color: #1c1c1c;
+    }
+
+    @media (max-width: 600px) {
+      .logout-btn {
+        float: none;
+        display: block;
+        margin-top: 10px;
+      }
     }
   </style>
 </head>
@@ -55,47 +103,42 @@
   <h1>📚 Teacher Dashboard</h1>
   <button class="logout-btn" onclick="logout()">🚪 Logout</button>
 
-  <div class="info-box">
+  <div class="card">
     <strong>👩‍🏫 Teacher:</strong> <span id="teacherName"></span><br />
-    <strong>📘 Current Class:</strong> <span id="className"></span><br>
-    
-    <label><strong>📂 Select Your Class:</strong></label><br>
+    <strong>📘 Current Class:</strong> <span id="className"></span><br><br>
+
+    <label><strong>📂 Select Your Class:</strong></label>
     <select id="classSelector" onchange="onClassSelect(this.value)">
       <option value="">-- Select --</option>
     </select>
   </div>
 
-  <div class="homework-box">
+  <div class="card">
     <h3>🏫 Class & Student Manager</h3>
-    
-    <div>
-      <label><strong>➕ Add New Class:</strong></label><br>
-      <input type="text" id="newClassInput" placeholder="e.g. 6B" />
-      <button onclick="addNewClass()">Create Class</button>
-      <p id="classStatus" style="color:green;"></p>
-    </div>
-    
-    <br>
+    <label>➕ Add New Class:</label>
+    <input type="text" id="newClassInput" placeholder="e.g. 6B" />
+    <button onclick="addNewClass()">Create Class</button>
+    <div id="classStatus" class="status-msg"></div>
 
-    <div>
-      <label><strong>➕ Add Student to Class:</strong></label><br>
-      <input type="text" id="classForStudent" placeholder="e.g. 6A" />
-      <input type="text" id="studentNameInput" placeholder="Student Name" />
-      <button onclick="addStudent()">Add Student</button>
-      <p id="studentStatus" style="color:green;"></p>
-    </div>
+    <br><br>
+
+    <label>➕ Add Student to Class:</label>
+    <input type="text" id="classForStudent" placeholder="e.g. 6A" />
+    <input type="text" id="studentNameInput" placeholder="Student Name" />
+    <button onclick="addStudent()">Add Student</button>
+    <div id="studentStatus" class="status-msg"></div>
   </div>
 
-  <div class="student-list">
+  <div class="card">
     <h3>👥 Student List</h3>
     <div id="studentContainer">Loading...</div>
   </div>
 
-  <div class="homework-box">
+  <div class="card">
     <h3>✏️ Upload Homework</h3>
     <textarea id="homeworkText" rows="4" placeholder="Write homework here..."></textarea><br />
     <button onclick="uploadHomework()">Upload Homework</button>
-    <p id="homeworkStatus" style="color:green;"></p>
+    <div id="homeworkStatus" class="status-msg"></div>
   </div>
 
   <!-- Firebase SDKs -->
@@ -127,12 +170,12 @@
           const data = snapshot.val();
           if (!data || data.role !== "teacher") {
             alert("Access denied.");
-            window.location.href = "../index.html";
+            window.location.href = "index.html";
             return;
           }
+
           document.getElementById("teacherName").innerText = data.name || "(unknown)";
 
-          // ✅ Load only teacher's own classes
           db.ref("classes").orderByChild("createdBy").equalTo(uid).once("value").then(classesSnap => {
             const allClasses = classesSnap.val() || {};
             const classNames = Object.keys(allClasses);
@@ -158,7 +201,7 @@
           });
         });
       } else {
-        window.location.href = "../index.html";
+        window.location.href = "index.html";
       }
     });
 
@@ -214,7 +257,7 @@
       const today = new Date().toISOString().split('T')[0];
       db.ref(`homework/${assignedClass}/${today}`).set(homework)
         .then(() => {
-          statusText.style.color = "green";
+          statusText.style.color = "lightgreen";
           statusText.textContent = "Homework uploaded successfully.";
           document.getElementById("homeworkText").value = "";
         });
@@ -238,7 +281,7 @@
         students: {}
       })
       .then(() => {
-        status.style.color = "green";
+        status.style.color = "lightgreen";
         status.textContent = `Class ${classInput} created successfully.`;
         document.getElementById("newClassInput").value = "";
 
@@ -275,7 +318,7 @@
 
       db.ref(`classes/${classId}/students/${studentId}`).set(studentName)
         .then(() => {
-          status.style.color = "green";
+          status.style.color = "lightgreen";
           status.textContent = `Student '${studentName}' added to class ${classId}.`;
           document.getElementById("studentNameInput").value = "";
           if (classId === assignedClass) loadStudents(assignedClass);
@@ -287,11 +330,10 @@
     }
 
     function logout() {
-  auth.signOut().then(() => {
-    window.location.href = "index.html";  // ✅ Correct path
-  });
-}
-
+      auth.signOut().then(() => {
+        window.location.href = "./index.html";
+      });
+    }
   </script>
 </body>
 </html>
