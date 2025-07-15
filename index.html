@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Login | School Staff Panel</title>
+  <title>Staff Login</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     * {
@@ -13,73 +13,74 @@
     }
 
     body {
-      height: 100vh;
-      background: linear-gradient(135deg, #74ebd5, #acb6e5);
+      min-height: 100vh;
+      background-color: #f1f1f1;
       display: flex;
       justify-content: center;
       align-items: center;
     }
 
-    .login-container {
-      background: rgba(255, 255, 255, 0.15);
-      backdrop-filter: blur(10px);
-      border-radius: 16px;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
-      padding: 40px;
+    .login-card {
+      background-color: #fff;
+      padding: 40px 32px;
+      border-radius: 14px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
       width: 100%;
       max-width: 400px;
       text-align: center;
-      color: #fff;
     }
 
-    h2 {
-      margin-bottom: 20px;
-      font-size: 28px;
+    .login-card h2 {
+      font-size: 24px;
+      margin-bottom: 24px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      color: #222;
     }
 
-    input {
+    .login-card input {
       width: 100%;
       padding: 12px 16px;
-      margin: 10px 0;
-      border: none;
+      margin-bottom: 16px;
       border-radius: 8px;
-      background: rgba(255,255,255,0.2);
-      color: #fff;
-      font-size: 16px;
+      border: 1px solid #ccc;
+      font-size: 15px;
+      transition: border 0.3s;
+    }
+
+    .login-card input:focus {
+      border-color: #007BFF;
       outline: none;
     }
 
-    input::placeholder {
-      color: #ddd;
-    }
-
-    button {
+    .login-card button {
       width: 100%;
       padding: 12px;
-      margin-top: 15px;
+      background-color: #007BFF;
+      color: #fff;
+      font-size: 16px;
       border: none;
       border-radius: 8px;
-      background-color: #007BFF;
-      color: white;
-      font-size: 16px;
       cursor: pointer;
       transition: background 0.3s ease;
     }
 
-    button:hover {
+    .login-card button:hover {
       background-color: #0056b3;
     }
 
     #errorMsg {
       margin-top: 12px;
-      color: #ffcdd2;
+      color: #d9534f;
       font-size: 14px;
     }
   </style>
 </head>
 <body>
 
-  <div class="login-container">
+  <div class="login-card">
     <h2>🔐 Staff Login</h2>
     <input type="email" id="email" placeholder="Email" />
     <input type="password" id="password" placeholder="Password" />
@@ -121,7 +122,7 @@
       auth.signInWithEmailAndPassword(email, password)
         .then(userCredential => {
           const uid = userCredential.user.uid;
-          return firebase.database().ref("users/" + uid).once("value");
+          return db.ref("users/" + uid).once("value");
         })
         .then(snapshot => {
           const userData = snapshot.val();
@@ -132,7 +133,7 @@
           } else if (userData.role === "driver") {
             window.location.href = "driver.html";
           } else {
-            alert("Unknown role");
+            errorBox.textContent = "Unknown user role.";
           }
         })
         .catch(err => {
