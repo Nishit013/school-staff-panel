@@ -307,6 +307,47 @@ input:focus, textarea:focus, select:focus {
 .bar-label {
   font-size: 13px;
   margin: 6px 0 4px;
+}.bar-label {
+  margin-top: 8px;
+  font-size: 13px;
+  color: #aaa;
+}
+
+.progress-bar {
+  height: 8px;
+  background-color: #333;
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 4px 0 10px;
+}
+
+.progress-fill.present {
+  height: 100%;
+  background-color: #21c064;
+  width: 0%;
+  transition: width 0.5s ease-in-out;
+}
+
+.progress-fill.absent {
+  height: 100%;
+  background-color: #e74c3c;
+  width: 0%;
+  transition: width 0.5s ease-in-out;
+}
+
+.progress-bar-container {
+  background-color: #333;
+  border-radius: 8px;
+  height: 10px;
+  margin-top: 6px;
+  width: 100%;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  border-radius: 8px;
+  transition: width 0.4s ease;
 }
 
   </style>
@@ -389,6 +430,7 @@ input:focus, textarea:focus, select:focus {
     const db = firebase.database();
 
     let assignedClass = "";
+let tempAttendance = {};  // Format: { studentId: 'Present' or 'Absent' }
 
     auth.onAuthStateChanged(user => {
       if (user) {
@@ -483,7 +525,7 @@ input:focus, textarea:focus, select:focus {
   <div class="name">${name}</div>
   <div class="analytics">
     📅 Date: ${selectedDate}<br>
-    🟡 Today: <strong>${statusToday}</strong><br>
+    🟡 Today: <strong>${statusToday || tempAttendance[id] || 'Not marked'}</strong><br>
     ✅ Present: ${presentCount} | ❌ Absent: ${absentCount}
     
     <div class="bar-label">✅ Present %</div>
@@ -495,12 +537,19 @@ input:focus, textarea:focus, select:focus {
       <div class="progress-fill absent" style="width: 0%;"></div>
     </div>
   </div>
+
   <div class="actions">
-    <button onclick="markAttendance('${id}', '${name}', 'Present')">Present</button>
-    <button onclick="markAttendance('${id}', '${name}', 'Absent')">Absent</button>
-    <button style="background-color:#e74c3c" onclick="deleteStudent('${id}', '${name}')">Delete</button>
+    <button onclick="markAttendance('${id}', '${name}', 'Present')" ${statusToday ? 'disabled' : ''}>Present</button>
+    <button onclick="markAttendance('${id}', '${name}', 'Absent')" ${statusToday ? 'disabled' : ''}>Absent</button>
+
+    ${!statusToday && tempAttendance[id] ? `
+      <button onclick="confirmAttendance('${id}', '${name}')">✅ Confirm</button>
+    ` : ''}
+
+    <button style="background-color:#e74c3c" onclick="deleteStudent('${id}', '${name}')" ${statusToday ? 'disabled' : ''}>Delete</button>
   </div>
 `;
+
 setTimeout(() => {
   const totalDays = presentCount + absentCount || 1;
   const presentPercent = (presentCount / totalDays) * 100;
@@ -520,28 +569,21 @@ setTimeout(() => {
 
 
   function markAttendance(studentId, studentName, status) {
+  tempAttendance[studentId] = status;
+  loadStudents(assignedClass); // Refresh UI to show Confirm button
+}
+
+function confirmAttendance(studentId, studentName) {
   const today = new Date().toISOString().split('T')[0];
-  const path = `attendance/${assignedClass}/${today}/${studentId}`;
+  const finalStatus = tempAttendance[studentId];
+  if (!finalStatus) return;
 
-  db.ref(path).once("value").then(snapshot => {
-    const currentStatus = snapshot.val();
-
-    if (currentStatus === status) {
-      // Already marked with same status — no need to update
-      console.log(`${studentName} already marked as ${status}`);
-      return;
-    }
-
-    db.ref(path).set(status)
-      .then(() => {
-        // Silent update — no alert
-        loadStudents(assignedClass); // Refresh UI
-      })
-      .catch(err => {
-        console.error("Error updating attendance:", err.message);
-      });
+  db.ref(`attendance/${assignedClass}/${today}/${studentId}`).set(finalStatus).then(() => {
+    delete tempAttendance[studentId]; // Clear temp state
+    loadStudents(assignedClass);     // Refresh
   });
 }
+
 
 
   function deleteStudent(studentId, studentName) {
