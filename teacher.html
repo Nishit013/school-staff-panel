@@ -512,22 +512,30 @@ function cancelPending(studentId) {
 
   db.ref(`attendance/${assignedClass}/${d}/${studentId}`).set(status)
     .then(() => {
+      // Remove from staged
       delete tempAttendance[studentId];
 
-      // Inline update only
+      // Update that student's card inline
       const card = studentCards.find(c => c.getAttribute("data-id") === studentId);
       if (card) {
-        card.querySelector(".stats strong").textContent = status;
+        // Update today's status
+        const stats = card.querySelector(".stats strong");
+        if (stats) stats.textContent = status;
+
+        // Remove confirm button
         const confirmBtn = card.querySelector(".btn.confirm");
         if (confirmBtn) confirmBtn.remove();
-        card.querySelectorAll(".btn.present, .btn.absent")
-            .forEach(btn => btn.classList.remove("selected"));
+
+        // Clear button selection highlight
+        card.querySelectorAll(".actions .btn").forEach(btn => btn.classList.remove("selected"));
+        card.querySelector(`.btn.${status.toLowerCase()}`)?.classList.add("selected");
       }
 
       refreshAnalytics();
       updateConfirmAllButton();
     });
 }
+
 
 
 
