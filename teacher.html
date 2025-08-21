@@ -128,6 +128,17 @@
   @media (min-width:980px){
     .list{grid-template-columns:1fr 1fr 1fr}
   }
+
+
+  .btn.selected {
+  background: #3b82f6;  /* blue background */
+  color: white;
+  font-weight: bold;
+}
+
+
+
+
 </style>
 </head>
 <body>
@@ -404,9 +415,14 @@
       </div>
       <div class="row">
         <div class="actions">
-          <button class="btn present" onclick="stageAttendance('${id}','${name}','Present')">Present</button>
-          <button class="btn absent"  onclick="stageAttendance('${id}','${name}','Absent')">Absent</button>
-          ${tempAttendance[id] ? `<button class="btn confirm" onclick="confirmAttendance('${id}','${name}')">✅ Confirm</button>` : ``}
+          <button class="btn present ${tempAttendance[id]==='Present' ? 'selected' : ''}" 
+        onclick="stageAttendance('${id}','${name}','Present')">Present</button>
+<button class="btn absent ${tempAttendance[id]==='Absent' ? 'selected' : ''}" 
+        onclick="stageAttendance('${id}','${name}','Absent')">Absent</button>
+${tempAttendance[id] ? 
+  `<button class="btn confirm" onclick="confirmAttendance('${id}','${name}')">✅ Confirm</button>` 
+  : ``}
+
         </div>
         <button class="btn ghost" onclick="deleteStudent('${id}','${name}')">🗑️ Delete</button>
       </div>
