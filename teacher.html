@@ -396,6 +396,8 @@
     }
 
     // Build card
+    card.setAttribute("data-id", id);
+
     const card = document.createElement('div');
     card.className = "student";
     card.setAttribute("data-name", name.toLowerCase());
@@ -503,19 +505,30 @@ function cancelPending(studentId) {
 }
 
 
-    function confirmAttendance(studentId, studentName){
+  function confirmAttendance(studentId, studentName) {
   const d = selectedDate();
-  const status = tempAttendance[studentId]; 
-  if(!status) return;
+  const status = tempAttendance[studentId];
+  if (!status) return;
 
   db.ref(`attendance/${assignedClass}/${d}/${studentId}`).set(status)
-    .then(()=>{
-      // Remove from staged after saving
-      delete tempAttendance[studentId];  
-      loadStudents(assignedClass); 
+    .then(() => {
+      delete tempAttendance[studentId];
+
+      // Inline update only
+      const card = studentCards.find(c => c.getAttribute("data-id") === studentId);
+      if (card) {
+        card.querySelector(".stats strong").textContent = status;
+        const confirmBtn = card.querySelector(".btn.confirm");
+        if (confirmBtn) confirmBtn.remove();
+        card.querySelectorAll(".btn.present, .btn.absent")
+            .forEach(btn => btn.classList.remove("selected"));
+      }
+
       refreshAnalytics();
+      updateConfirmAllButton();
     });
 }
+
 
 
    function confirmAll() {
