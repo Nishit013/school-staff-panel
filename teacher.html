@@ -202,6 +202,20 @@
       <button class="btn" onclick="downloadCSV()">⬇️ Export CSV</button>
     </div>
 
+
+    <!-- Add Students -->
+<div class="section">
+  <h3>➕ Add Student</h3>
+  <div class="row">
+    <input id="newStudentName" placeholder="Enter student name"
+      style="flex:1;border:1px solid var(--border);background:var(--surface-2);color:var(--text);border-radius:12px;padding:10px" />
+    <button class="btn primary" onclick="addStudent()">Add</button>
+  </div>
+  <div id="addStudentStatus" style="margin-top:6px;color:var(--muted);font-size:13px"></div>
+</div>
+
+
+
     <!-- Students -->
     <div class="section">
       <h3>Attendance — Students</h3>
@@ -393,6 +407,41 @@
       }
       filterStudents(); // apply search filter if any
     }
+
+
+
+    function addStudent(){
+  const name = document.getElementById('newStudentName').value.trim();
+  const s = document.getElementById('addStudentStatus');
+  if(!assignedClass){
+    s.style.color='var(--danger)';
+    s.textContent='Please select a class first.';
+    return;
+  }
+  if(!name){
+    s.style.color='var(--danger)';
+    s.textContent='Enter a valid student name.';
+    return;
+  }
+
+  // Create unique ID (firebase push key)
+  const newId = db.ref(`classes/${assignedClass}/students`).push().key;
+  db.ref(`classes/${assignedClass}/students/${newId}`).set(name)
+    .then(()=>{
+      s.style.color='var(--success)';
+      s.textContent=`Added ${name} ✅`;
+      document.getElementById('newStudentName').value="";
+      loadStudents(assignedClass); // refresh list
+      refreshAnalytics();
+    })
+    .catch(err=>{
+      s.style.color='var(--danger)';
+      s.textContent='Error: ' + err.message;
+    });
+}
+
+
+
 
     // ==== Staging + confirm workflow ====
     function stageAttendance(studentId, studentName, status){
