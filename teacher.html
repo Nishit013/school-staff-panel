@@ -400,6 +400,9 @@
 
     const card = document.createElement('div');
     card.className = "student";
+
+    card.setAttribute("data-id", id);
+
     card.setAttribute("data-name", name.toLowerCase());
     card.innerHTML = `
       <div class="row">
@@ -479,24 +482,40 @@ ${tempAttendance[id] ?
 
 
     // ==== Staging + confirm workflow ====
-    function stageAttendance(studentId, studentName, status) {
+   function stageAttendance(studentId, studentName, status) {
   const d = selectedDate();
 
-  // Check if already confirmed in DB
   db.ref(`attendance/${assignedClass}/${d}/${studentId}`).once('value').then(s => {
     if (s.exists()) {
       alert("Attendance already confirmed for this student.");
       return;
     }
 
-    // Stage locally
     tempAttendance[studentId] = status;
 
-    // Refresh UI
-    loadStudents(assignedClass);
-    updateConfirmAllButton();  // <-- keep confirm button in sync
+    // Inline update instead of reloading all
+    const card = studentCards.find(c => c.getAttribute("data-id") === studentId);
+    if (card) {
+      card.querySelector(".stats strong").textContent = `${status} (Pending)`;
+
+      card.querySelectorAll(".btn.present, .btn.absent")
+          .forEach(btn => btn.classList.remove("selected"));
+      card.querySelector(`.btn.${status.toLowerCase()}`).classList.add("selected");
+
+      // add confirm button if missing
+      if (!card.querySelector(".btn.confirm")) {
+        const confirmBtn = document.createElement("button");
+        confirmBtn.className = "btn confirm";
+        confirmBtn.textContent = "✅ Confirm";
+        confirmBtn.onclick = () => confirmAttendance(studentId, studentName);
+        card.querySelector(".actions").appendChild(confirmBtn);
+      }
+    }
+
+    updateConfirmAllButton();
   });
 }
+
 
 function cancelPending(studentId) {
   delete tempAttendance[studentId];
