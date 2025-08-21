@@ -365,7 +365,8 @@
           if(day[id]==="Present") presentCount++;
           if(day[id]==="Absent")  absentCount++;
         });
-        const statusToday = attendanceToday[id] || tempAttendance[id] || "Not Marked";
+        const statusToday = attendanceToday[id] ? attendanceToday[id] : (tempAttendance[id] || "Not Marked");
+
 
         // Build card
         const card = document.createElement('div');
@@ -445,14 +446,20 @@
 
     // ==== Staging + confirm workflow ====
     function stageAttendance(studentId, studentName, status){
-      const d = selectedDate();
-      // If already saved for today, do not allow changing (locked)
-      db.ref(`attendance/${assignedClass}/${d}/${studentId}`).once('value').then(s=>{
-        if(s.exists()){ return; } // locked for today
-        tempAttendance[studentId] = status;
-        loadStudents(assignedClass);
-      });
+  const d = selectedDate();
+  // Check if already confirmed in DB
+  db.ref(`attendance/${assignedClass}/${d}/${studentId}`).once('value').then(s=>{
+    if(s.exists()){ 
+      // Already confirmed => do not allow change
+      alert("Attendance already confirmed for this student.");
+      return;
     }
+    // Stage the change (overwrite previous staged value if any)
+    tempAttendance[studentId] = status;
+    loadStudents(assignedClass); // re-render cards with new staged status
+  });
+}
+
 
     function confirmAttendance(studentId, studentName){
       const d = selectedDate();
