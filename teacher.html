@@ -1,246 +1,235 @@
 <!DOCTYPE html>
 <html lang="en">
-<!DOCTYPE html>
-<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Teacher Dashboard</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --bg: #f4f4f4;
-      --sidebar: #ffffff;
-      --card: #ffffff;
-      --text: #111111;
-      --primary: #00bcd4;
-      --accent: #0097a7;
-      --success: #21c064;
-      --danger: #ff4f4f;
-    }
+<meta charset="UTF-8" />
+<title>Teacher Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0f1220; --surface:#151a2e; --surface-2:#1b2240; --text:#e9eefb; --muted:#a6b0cf;
+    --primary:#00bcd4; --primary-2:#0097a7; --success:#21c064; --danger:#ff4f4f; --warn:#f0c419;
+    --card:#151a2e; --border:#253058; --shadow:0 10px 30px rgba(0,0,0,.35);
+  }
+  [data-theme="light"]{
+    --bg:#f6f8ff; --surface:#ffffff; --surface-2:#f3f6ff; --text:#0b1635; --muted:#47517a;
+    --primary:#007c8a; --primary-2:#00a1b3; --success:#1e9c54; --danger:#e03b3b; --warn:#cc9c10;
+    --card:#ffffff; --border:#e3e8ff; --shadow:0 8px 24px rgba(10,42,120,.08);
+  }
 
-    [data-theme="dark"] {
-      --bg: #0f0f0f;
-      --sidebar: #141414;
-      --card: #1a1a1a;
-      --text: #f0f0f0;
-    }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+    background:var(--bg); color:var(--text);
+  }
 
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: "Inter", sans-serif;
-    }
+  /* Navbar */
+  .nav{
+    position:sticky; top:0; z-index:50;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:12px 16px; background:var(--surface); border-bottom:1px solid var(--border);
+  }
+  .brand{display:flex; align-items:center; gap:10px; font-weight:700}
+  .brand .logo{
+    width:32px; height:32px; display:grid; place-items:center; border-radius:10px;
+    background:linear-gradient(135deg,var(--primary),var(--primary-2)); color:white;
+    box-shadow:0 6px 16px rgba(0, 188, 212, .25);
+  }
+  .nav-actions{display:flex; align-items:center; gap:8px}
+  .btn, .chip{
+    border:1px solid var(--border); background:var(--surface-2); color:var(--text);
+    padding:8px 12px; border-radius:10px; cursor:pointer; font-weight:600;
+    transition:.2s transform, .2s background, .2s border-color; box-shadow:var(--shadow);
+  }
+  .btn:hover{transform:translateY(-1px)}
+  .btn.primary{background:linear-gradient(135deg,var(--primary),var(--primary-2)); border-color:transparent; color:white}
+  .btn.danger{background:var(--danger); color:white; border-color:transparent}
+  .btn.ghost{background:transparent}
 
-    body {
-      display: flex;
-      min-height: 100vh;
-      background: var(--bg);
-      color: var(--text);
-    }
+  /* Layout */
+  .wrap{padding:14px; max-width:1100px; margin:0 auto}
 
-    /* Sidebar */
-    .sidebar {
-      width: 240px;
-      background: var(--sidebar);
-      padding: 20px;
-      box-shadow: 2px 0 12px rgba(0,0,0,0.2);
-      display: flex;
-      flex-direction: column;
-      position: fixed;
-      height: 100vh;
-    }
-    .sidebar h2 {
-      margin-bottom: 20px;
-      color: var(--primary);
-    }
-    .sidebar a {
-      display: block;
-      padding: 10px 12px;
-      border-radius: 8px;
-      margin-bottom: 8px;
-      text-decoration: none;
-      color: var(--text);
-      transition: 0.3s;
-    }
-    .sidebar a:hover {
-      background: var(--primary);
-      color: #fff;
-    }
-    .theme-toggle {
-      margin-top: auto;
-      padding: 8px 12px;
-      border: 2px solid var(--primary);
-      border-radius: 8px;
-      background: transparent;
-      color: var(--primary);
-      cursor: pointer;
-    }
+  /* Analytics header */
+  .analytics{
+    display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px;
+  }
+  .kpi{
+    background:var(--card); border:1px solid var(--border); border-radius:14px; padding:14px;
+    display:flex; align-items:center; gap:12px; box-shadow:var(--shadow);
+  }
+  .kpi .icon{width:40px; height:40px; border-radius:10px; display:grid; place-items:center}
+  .kpi .meta{line-height:1.2}
+  .kpi .val{font-size:20px; font-weight:700}
+  .icon.green{background:#163222; color:#7ff0a8}
+  .icon.red{background:#3b1a1a; color:#ff8a8a}
+  .icon.blue{background:#0f2730; color:#8de9f6}
 
-    /* Main */
-    .main {
-      margin-left: 240px;
-      padding: 20px;
-      flex: 1;
-    }
+  /* Floating class summary */
+  .summary{
+    position:sticky; top:64px; z-index:1;
+    background:var(--card); border:1px solid var(--border); border-radius:14px; padding:14px;
+    margin-top:10px; box-shadow:var(--shadow);
+  }
+  .summary-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+  .mini{
+    background:var(--surface-2); border:1px solid var(--border); border-radius:12px; padding:10px;
+  }
+  .spark{width:100%; height:40px}
 
-    h1 {
-      font-size: 26px;
-      margin-bottom: 16px;
-    }
+  /* Controls */
+  .controls{
+    margin-top:14px; display:flex; flex-wrap:wrap; gap:10px; align-items:center;
+    background:var(--card); border:1px solid var(--border); border-radius:14px; padding:12px;
+  }
+  .select, .input{
+    flex:1 1 180px; display:flex; align-items:center; gap:8px;
+    border:1px solid var(--border); background:var(--surface-2); padding:10px 12px; border-radius:12px;
+  }
+  .select select, .input input{
+    width:100%; border:none; outline:none; background:transparent; color:var(--text); font-size:14px;
+  }
 
-    .card {
-      background: var(--card);
-      padding: 20px;
-      border-radius: 14px;
-      margin-bottom: 20px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-      transition: 0.3s;
-    }
-    .card:hover {
-      transform: translateY(-2px);
-    }
+  /* Student list */
+  .section{
+    margin-top:14px; background:var(--card); border:1px solid var(--border); border-radius:14px; padding:12px;
+  }
+  .section h3{margin:0 0 10px 0; font-size:18px}
+  .list{display:grid; gap:10px}
+  .student{
+    border:1px solid var(--border); border-radius:12px; padding:12px; background:var(--surface-2);
+    display:grid; gap:10px;
+  }
+  .row{display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap}
+  .name{font-weight:700}
+  .stats{font-size:12px; color:var(--muted)}
+  .actions{display:flex; gap:8px}
+  .actions .btn{padding:8px 10px; border-radius:8px; box-shadow:none}
+  .actions .present{background:var(--success); color:white; border-color:transparent}
+  .actions .absent{background:var(--danger); color:white; border-color:transparent}
+  .actions .confirm{background:var(--primary); color:white; border-color:transparent}
 
-    button {
-      background: linear-gradient(135deg, var(--primary), var(--accent));
-      border: none;
-      padding: 8px 14px;
-      border-radius: 8px;
-      color: #fff;
-      font-weight: 600;
-      cursor: pointer;
-      transition: 0.3s;
-    }
-    button:hover {
-      transform: scale(1.05);
-    }
+  /* Progress bars */
+  .bar-label{font-size:12px; color:var(--muted); margin:2px 0 4px}
+  .bar{height:10px; background:#1f274b; border-radius:6px; overflow:hidden}
+  .fill{height:100%; width:0%; transition:width .8s ease; border-radius:6px}
+  .fill.present{background:var(--success)}
+  .fill.absent{background:var(--danger)}
 
-    input, textarea, select {
-      width: 100%;
-      padding: 10px;
-      margin-top: 8px;
-      margin-bottom: 10px;
-      border-radius: 8px;
-      border: 1px solid #aaa;
-      background: transparent;
-      color: var(--text);
-    }
+  /* Footer */
+  .footer-space{height:18px}
 
-    /* Student Grid */
-    .student-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      gap: 16px;
-      max-height: 420px;
-      overflow-y: auto;
-    }
-    .student-card {
-      background: var(--sidebar);
-      padding: 14px;
-      border-radius: 10px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-    }
-    .student-card .name {
-      font-weight: 600;
-      margin-bottom: 6px;
-    }
-    .progress-bar {
-      height: 8px;
-      background: #ddd;
-      border-radius: 6px;
-      overflow: hidden;
-      margin: 6px 0;
-    }
-    .progress-fill {
-      height: 100%;
-      width: 0%;
-      transition: width 0.8s;
-    }
-    .progress-fill.present {
-      background: var(--success);
-    }
-    .progress-fill.absent {
-      background: var(--danger);
-    }
-
-    @media (max-width: 768px) {
-      .sidebar {
-        position: fixed;
-        width: 200px;
-        left: -200px;
-        transition: left 0.3s;
-      }
-      .sidebar.open {
-        left: 0;
-      }
-      .main {
-        margin-left: 0;
-        padding: 16px;
-      }
-    }
-  </style>
+  /* Mobile first + small tablet */
+  @media (min-width:680px){
+    .analytics{grid-template-columns:repeat(3,1fr)}
+    .summary-grid{grid-template-columns:repeat(4,1fr)}
+    .list{grid-template-columns:1fr 1fr}
+  }
+  @media (min-width:980px){
+    .list{grid-template-columns:1fr 1fr 1fr}
+  }
+</style>
 </head>
-<body data-theme="dark">
-  <!-- Sidebar -->
-  <div class="sidebar">
-    <h2>📚 Teacher</h2>
-    <a href="#class">🏫 Classes</a>
-    <a href="#students">👥 Students</a>
-    <a href="#homework">✏️ Homework</a>
-    <a href="#analytics">📊 Analytics</a>
-    <button class="theme-toggle" onclick="toggleTheme()">🌙 Theme</button>
+<body>
+
+  <!-- NAV -->
+  <div class="nav">
+    <div class="brand">
+      <div class="logo">📚</div>
+      <div>Teacher Dashboard</div>
+    </div>
+    <div class="nav-actions">
+      <button class="btn ghost" id="themeToggle" title="Toggle theme">🌓</button>
+      <div class="chip" id="teacherChip">👩‍🏫 <span id="teacherName">—</span></div>
+      <button class="btn danger" onclick="logout()">Logout</button>
+    </div>
   </div>
 
-  <!-- Main Content -->
-  <div class="main">
-    <h1>👩‍🏫 Teacher Dashboard</h1>
+  <div class="wrap">
 
-    <div class="card" id="class">
-      <h3>🏫 Class Manager</h3>
-      <label>Add Class:</label>
-      <input type="text" placeholder="e.g. 6B" />
-      <button>Create</button>
-    </div>
-
-    <div class="card" id="students">
-      <h3>👥 Student List</h3>
-      <input type="date" />
-      <input type="text" placeholder="🔍 Search student..." />
-      <div class="student-grid">
-        <div class="student-card">
-          <div class="name">John Doe</div>
-          <div class="progress-bar"><div class="progress-fill present" style="width: 80%"></div></div>
-          <small>Attendance: 80%</small>
+    <!-- KPIs -->
+    <div class="analytics">
+      <div class="kpi">
+        <div class="icon green">✅</div>
+        <div class="meta">
+          <div class="label">Present (Today)</div>
+          <div class="val" id="kpiPresent">0</div>
         </div>
-        <div class="student-card">
-          <div class="name">Jane Smith</div>
-          <div class="progress-bar"><div class="progress-fill present" style="width: 95%"></div></div>
-          <small>Attendance: 95%</small>
+      </div>
+      <div class="kpi">
+        <div class="icon red">❌</div>
+        <div class="meta">
+          <div class="label">Absent (Today)</div>
+          <div class="val" id="kpiAbsent">0</div>
+        </div>
+      </div>
+      <div class="kpi">
+        <div class="icon blue">📊</div>
+        <div class="meta">
+          <div class="label">Attendance % (Today)</div>
+          <div class="val" id="kpiPercent">0%</div>
         </div>
       </div>
     </div>
 
-    <div class="card" id="homework">
-      <h3>✏️ Upload Homework</h3>
-      <textarea rows="4" placeholder="Write homework here..."></textarea>
-      <button>Upload</button>
+    <!-- Floating summary -->
+    <div class="summary">
+      <div class="row" style="margin-bottom:8px">
+        <div><strong>Class:</strong> <span id="className">—</span></div>
+        <div><strong>Date:</strong> <input type="date" id="attendanceDate" onchange="reloadAll()" /></div>
+      </div>
+      <div class="summary-grid">
+        <div class="mini"><div>Total Students</div><div style="font-size:20px;font-weight:700" id="sumTotal">0</div></div>
+        <div class="mini"><div>Marked Today</div><div style="font-size:20px;font-weight:700" id="sumMarked">0</div></div>
+        <div class="mini"><div>Present %</div><div style="font-size:20px;font-weight:700" id="sumPercent">0%</div></div>
+        <div class="mini"><div>7-Day Trend</div><canvas id="trend" class="spark"></canvas></div>
+      </div>
     </div>
+
+    <!-- Controls -->
+    <div class="controls">
+      <div class="select">
+        <span>📂 Class</span>
+        <select id="classSelector" onchange="onClassSelect(this.value)">
+          <option value="">Loading…</option>
+        </select>
+      </div>
+      <div class="input">
+        <span>🔍</span>
+        <input id="studentSearch" placeholder="Search student…" oninput="filterStudents()">
+      </div>
+      <button class="btn primary" onclick="confirmAll()" title="Save all pending marks">✅ Confirm All</button>
+      <button class="btn" onclick="downloadCSV()">⬇️ Export CSV</button>
+    </div>
+
+    <!-- Students -->
+    <div class="section">
+      <h3>Attendance — Students</h3>
+      <div id="studentContainer" class="list">Loading…</div>
+    </div>
+
+    <!-- Homework (kept simple) -->
+    <div class="section">
+      <h3>✏️ Upload Homework</h3>
+      <div class="row">
+        <textarea id="homeworkText" rows="3" style="width:100%;border:1px solid var(--border);background:var(--surface-2);color:var(--text);border-radius:12px;padding:10px" placeholder="Write homework here…"></textarea>
+      </div>
+      <div class="row" style="justify-content:flex-end">
+        <button class="btn primary" onclick="uploadHomework()">Upload</button>
+      </div>
+      <div id="homeworkStatus" style="margin-top:6px;color:var(--muted);font-size:13px"></div>
+    </div>
+
+    <div class="footer-space"></div>
   </div>
 
-  <script>
-    function toggleTheme(){
-      document.body.dataset.theme =
-        document.body.dataset.theme === "dark" ? "light" : "dark";
-    }
-  </script>
-
-
-  <!-- Firebase SDKs -->
+  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
   <script>
+    // ==== Firebase config (yours) ====
     const firebaseConfig = {
       apiKey: "AIzaSyCfffexgO1rf6m6EteNNtFb_kZnRqqTUBM",
       authDomain: "schoolmanagementsystem-32895.firebaseapp.com",
@@ -250,315 +239,318 @@
       messagingSenderId: "837516759841",
       appId: "1:837516759841:web:31d6666b15037082fa6460"
     };
-
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.database();
 
+    // ==== State ====
     let assignedClass = "";
+    let attendanceListener = null;
+    let tempAttendance = {}; // { studentId: 'Present'|'Absent' }
+    let studentCards = [];   // for filtering
+    let allStudentsMap = {}; // { id: name } cache for class
+    const todayISO = () => new Date().toISOString().split('T')[0];
 
-    auth.onAuthStateChanged(user => {
-      if (user) {
-        const uid = user.uid;
-        db.ref("users/" + uid).once("value").then(snapshot => {
-          const data = snapshot.val();
-          if (!data || data.role !== "teacher") {
-            alert("Access denied.");
-            window.location.href = "index.html";
-            return;
-          }
+    // ==== Theme toggle ====
+    const themeToggle = document.getElementById('themeToggle');
+    const setTheme = (t)=>document.documentElement.setAttribute('data-theme', t);
+    setTheme(localStorage.getItem('theme') || 'dark');
+    themeToggle.onclick = ()=>{
+      const current = document.documentElement.getAttribute('data-theme') || 'dark';
+      const next = current === 'dark' ? 'light' : 'dark';
+      setTheme(next); localStorage.setItem('theme', next);
+    };
 
-          document.getElementById("teacherName").innerText = data.name || "(unknown)";
+    // ==== Auth & bootstrap ====
+    auth.onAuthStateChanged(async user => {
+      if(!user){ window.location.href="index.html"; return; }
+      const snap = await db.ref("users/"+user.uid).once("value");
+      const u = snap.val();
+      if(!u || u.role!=="teacher"){ alert("Access denied."); window.location.href="index.html"; return; }
+      document.getElementById("teacherName").textContent = u.name || "(unknown)";
 
-          db.ref("classes").orderByChild("createdBy").equalTo(uid).once("value").then(classesSnap => {
-            const allClasses = classesSnap.val() || {};
-            const classNames = Object.keys(allClasses);
-            const selector = document.getElementById("classSelector");
-            selector.innerHTML = `<option value="">-- Select --</option>`;
+      // Set default date = today
+      const dateEl = document.getElementById('attendanceDate');
+      dateEl.value = todayISO();
 
-            if (classNames.length > 0) {
-              classNames.forEach(classId => {
-                const option = document.createElement("option");
-                option.value = classId;
-                option.textContent = classId;
-                selector.appendChild(option);
-              });
+      // Load teacher's classes
+      const classesSnap = await db.ref("classes").orderByChild("createdBy").equalTo(user.uid).once("value");
+      const classes = classesSnap.val() || {};
+      const classNames = Object.keys(classes);
+      const sel = document.getElementById('classSelector');
+      sel.innerHTML = classNames.length ? '<option value="">— Select —</option>' : '<option value="">No classes yet</option>';
+      classNames.forEach(cid=>{
+        const o = document.createElement('option'); o.value = cid; o.textContent = cid; sel.appendChild(o);
+      });
 
-              assignedClass = classNames[classNames.length - 1];
-              selector.value = assignedClass;
-              document.getElementById("className").innerText = assignedClass;
-              loadStudents(assignedClass);
-            } else {
-              document.getElementById("className").innerText = "None yet";
-              document.getElementById("studentContainer").innerHTML = "<p>No class found yet. Please create one.</p>";
-            }
-          });
-        });
+      // Auto-select last class (if any)
+      if(classNames.length){
+        assignedClass = classNames[classNames.length-1];
+        sel.value = assignedClass;
+        document.getElementById('className').textContent = assignedClass;
+        await loadStudents(assignedClass);
+        attachAttendanceListener(); // live updates for the date
+        refreshAnalytics();         // fill KPI + summary + sparkline
       } else {
-        window.location.href = "index.html";
+        document.getElementById('studentContainer').innerHTML = '<div class="mini">Create a class to begin.</div>';
       }
     });
 
-    function onClassSelect(classId) {
-      if (!classId) return;
+    // ==== Live listener for selected date ====
+    function attachAttendanceListener(){
+      if(attendanceListener){ attendanceListener.off(); attendanceListener=null; }
+      if(!assignedClass) return;
+      const d = selectedDate();
+      attendanceListener = db.ref(`attendance/${assignedClass}/${d}`);
+      attendanceListener.on('value', ()=>{ refreshAnalytics(); /* live KPI */ loadStudents(assignedClass); });
+    }
+
+    function selectedDate(){
+      return document.getElementById('attendanceDate')?.value || todayISO();
+    }
+    function reloadAll(){
+      attachAttendanceListener();
+      refreshAnalytics();
+      loadStudents(assignedClass);
+    }
+
+    // ==== Class select ====
+    async function onClassSelect(classId){
+      if(!classId) return;
       assignedClass = classId;
-      document.getElementById("className").innerText = classId;
-      loadStudents(classId);
+      document.getElementById('className').textContent = classId;
+      tempAttendance = {};
+      await loadStudents(classId);
+      attachAttendanceListener();
+      refreshAnalytics();
     }
 
-    
-  // Your existing firebaseConfig, firebase.initializeApp, auth and db remain same
-  // Continue after auth.onAuthStateChanged logic
+    // ==== Load students + build cards ====
+    async function loadStudents(classId){
+      const container = document.getElementById('studentContainer');
+      container.innerHTML = "Loading…";
+      studentCards = [];
+      if(!classId){ container.innerHTML = "Select a class."; return; }
 
-  function loadStudents(classId) {
-  const container = document.getElementById("studentContainer");
-  container.innerHTML = "<p>Loading students...</p>";
+      const studentsSnap = await db.ref(`classes/${classId}/students`).once("value");
+      const students = studentsSnap.val();
+      allStudentsMap = students || {};
+      if(!students){ container.innerHTML = "No students in this class."; return; }
 
-  const selectedDate = document.getElementById("attendanceDate")?.value || new Date().toISOString().split('T')[0];
+      const d = selectedDate();
+      const todaySnap = await db.ref(`attendance/${classId}/${d}`).once("value");
+      const attendanceToday = todaySnap.val() || {};
 
-  db.ref("classes/" + classId + "/students").once("value").then(snapshot => {
-    const students = snapshot.val();
-    if (!students) {
-      container.innerHTML = "<p>No students found in this class.</p>";
-      return;
-    }
+      container.innerHTML = "";
+      for(const [id,name] of Object.entries(students)){
+        // Totals over all time
+        const allDaysSnap = await db.ref(`attendance/${classId}`).once("value");
+        const allDays = allDaysSnap.val() || {};
+        let presentCount=0, absentCount=0;
+        Object.values(allDays).forEach(day=>{
+          if(day[id]==="Present") presentCount++;
+          if(day[id]==="Absent")  absentCount++;
+        });
+        const statusToday = attendanceToday[id] || tempAttendance[id] || "Not Marked";
 
-    container.innerHTML = "";
-    window.studentCards = [];
-
-    db.ref(`attendance/${classId}/${selectedDate}`).once("value").then(daySnap => {
-      const attendanceToday = daySnap.val() || {};
-
-      Object.entries(students).forEach(([id, name]) => {
-        const card = document.createElement("div");
-        card.className = "student-card";
+        // Build card
+        const card = document.createElement('div');
+        card.className = "student";
         card.setAttribute("data-name", name.toLowerCase());
+        card.innerHTML = `
+          <div class="row">
+            <div class="name">${name}</div>
+            <div class="stats">
+              📅 ${d} • Today: <strong>${statusToday}</strong> •
+              ✅ ${presentCount} | ❌ ${absentCount}
+            </div>
+          </div>
+          <div>
+            <div class="bar-label">✅ Present %</div>
+            <div class="bar"><div class="fill present"></div></div>
+            <div class="bar-label">❌ Absent %</div>
+            <div class="bar"><div class="fill absent"></div></div>
+          </div>
+          <div class="row">
+            <div class="actions">
+              <button class="btn present" onclick="stageAttendance('${id}','${name}','Present')">Present</button>
+              <button class="btn absent"  onclick="stageAttendance('${id}','${name}','Absent')">Absent</button>
+              ${(!attendanceToday[id] && tempAttendance[id]) ? `<button class="btn confirm" onclick="confirmAttendance('${id}','${name}')">✅ Confirm</button>` : ``}
+            </div>
+            <button class="btn ghost" onclick="deleteStudent('${id}','${name}')">🗑️ Delete</button>
+          </div>
+        `;
 
-        // Count all-time attendance for analytics
-        db.ref(`attendance/${classId}`).once("value").then(attSnap => {
-          const allDays = attSnap.val() || {};
-          let presentCount = 0, absentCount = 0;
+        // Animate bars
+        setTimeout(()=>{
+          const total = (presentCount+absentCount)||1;
+          card.querySelector('.fill.present').style.width = `${(presentCount/total)*100}%`;
+          card.querySelector('.fill.absent').style.width  = `${(absentCount/total)*100}%`;
+        }, 40);
 
-          Object.values(allDays).forEach(day => {
-            if (day[id] === "Present") presentCount++;
-            if (day[id] === "Absent") absentCount++;
-          });
-
-          const statusToday = attendanceToday[id] || "Not Marked";
-
-         card.innerHTML = `
-  <div class="name">${name}</div>
-  <div class="analytics">
-    📅 Date: ${selectedDate}<br>
-    🟡 Today: <strong>${statusToday}</strong><br>
-    ✅ Present: ${presentCount} | ❌ Absent: ${absentCount}
-    
-    <div class="bar-label">✅ Present %</div>
-    <div class="progress-bar">
-      <div class="progress-fill present" style="width: 0%;"></div>
-    </div>
-    <div class="bar-label">❌ Absent %</div>
-    <div class="progress-bar">
-      <div class="progress-fill absent" style="width: 0%;"></div>
-    </div>
-  </div>
-  <div class="actions">
-    <button onclick="markAttendance('${id}', '${name}', 'Present')">Present</button>
-    <button onclick="markAttendance('${id}', '${name}', 'Absent')">Absent</button>
-    <button style="background-color:#e74c3c" onclick="deleteStudent('${id}', '${name}')">Delete</button>
-  </div>
-`;
-setTimeout(() => {
-  const totalDays = presentCount + absentCount || 1;
-  const presentPercent = (presentCount / totalDays) * 100;
-  const absentPercent = (absentCount / totalDays) * 100;
-
-  card.querySelector(".progress-fill.present").style.width = `${presentPercent}%`;
-  card.querySelector(".progress-fill.absent").style.width = `${absentPercent}%`;
-}, 100);
-
-          studentCards.push(card);
-          container.appendChild(card);
-        });
-      });
-    });
-  });
-}
-
-
-  function markAttendance(studentId, studentName, status) {
-  const today = new Date().toISOString().split('T')[0];
-  const path = `attendance/${assignedClass}/${today}/${studentId}`;
-
-  db.ref(path).once("value").then(snapshot => {
-    const currentStatus = snapshot.val();
-
-    if (currentStatus === status) {
-      // Already marked with same status — no need to update
-      console.log(`${studentName} already marked as ${status}`);
-      return;
+        container.appendChild(card);
+        studentCards.push(card);
+      }
+      filterStudents(); // apply search filter if any
     }
 
-    db.ref(path).set(status)
-      .then(() => {
-        // Silent update — no alert
-        loadStudents(assignedClass); // Refresh UI
-      })
-      .catch(err => {
-        console.error("Error updating attendance:", err.message);
-      });
-  });
-}
-
-
-  function deleteStudent(studentId, studentName) {
-    if (confirm(`Are you sure you want to remove ${studentName}?`)) {
-      db.ref(`classes/${assignedClass}/students/${studentId}`).remove()
-        .then(() => {
-          alert(`${studentName} deleted`);
-          loadStudents(assignedClass);
-        });
-    }
-  }
-
-  function downloadCSV() {
-    db.ref("classes/" + assignedClass + "/students").once("value").then(snapshot => {
-      const students = snapshot.val();
-      if (!students) return;
-
-      let csv = "Student ID,Student Name\n";
-      for (const [id, name] of Object.entries(students)) {
-        csv += `${id},${name}\n`;
-      }
-
-      const blob = new Blob([csv], { type: "text/csv" });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `${assignedClass}_students.csv`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    });
-  }
-
-
-
-    function uploadHomework() {
-      const homework = document.getElementById("homeworkText").value.trim();
-      const statusText = document.getElementById("homeworkStatus");
-      if (!homework) {
-        statusText.style.color = "red";
-        statusText.textContent = "Please enter homework.";
-        return;
-      }
-
-      const today = new Date().toISOString().split('T')[0];
-      db.ref(`homework/${assignedClass}/${today}`).set(homework)
-        .then(() => {
-          statusText.style.color = "lightgreen";
-          statusText.textContent = "Homework uploaded successfully.";
-          document.getElementById("homeworkText").value = "";
-        });
-    }
-
-    function addNewClass() {
-      const classInput = document.getElementById("newClassInput").value.trim().toUpperCase();
-      const status = document.getElementById("classStatus");
-      status.textContent = "";
-
-      if (!classInput) {
-        status.style.color = "red";
-        status.textContent = "Please enter a class name.";
-        return;
-      }
-
-      const teacherUID = firebase.auth().currentUser.uid;
-
-      db.ref("classes/" + classInput).set({
-        createdBy: teacherUID,
-        students: {}
-      })
-      .then(() => {
-        status.style.color = "lightgreen";
-        status.textContent = `Class ${classInput} created successfully.`;
-        document.getElementById("newClassInput").value = "";
-
-        const selector = document.getElementById("classSelector");
-        const option = document.createElement("option");
-        option.value = classInput;
-        option.textContent = classInput;
-        selector.appendChild(option);
-        selector.value = classInput;
-
-        assignedClass = classInput;
-        document.getElementById("className").innerText = assignedClass;
+    // ==== Staging + confirm workflow ====
+    function stageAttendance(studentId, studentName, status){
+      const d = selectedDate();
+      // If already saved for today, do not allow changing (locked)
+      db.ref(`attendance/${assignedClass}/${d}/${studentId}`).once('value').then(s=>{
+        if(s.exists()){ return; } // locked for today
+        tempAttendance[studentId] = status;
         loadStudents(assignedClass);
-      })
-      .catch(err => {
-        status.style.color = "red";
-        status.textContent = "Error: " + err.message;
       });
     }
 
-    function addStudent() {
-      const classId = document.getElementById("classForStudent").value.trim().toUpperCase();
-      const studentName = document.getElementById("studentNameInput").value.trim();
-      const status = document.getElementById("studentStatus");
-      status.textContent = "";
+    function confirmAttendance(studentId, studentName){
+      const d = selectedDate();
+      const finalStatus = tempAttendance[studentId];
+      if(!finalStatus) return;
+      db.ref(`attendance/${assignedClass}/${d}/${studentId}`).set(finalStatus).then(()=>{
+        delete tempAttendance[studentId];
+        refreshAnalytics();
+        loadStudents(assignedClass);
+      });
+    }
 
-      if (!classId || !studentName) {
-        status.style.color = "red";
-        status.textContent = "Please enter both class and student name.";
-        return;
+    function confirmAll(){
+      const d = selectedDate();
+      const updates = {};
+      Object.entries(tempAttendance).forEach(([sid,st])=>{
+        updates[`attendance/${assignedClass}/${d}/${sid}`] = st;
+      });
+      if(Object.keys(updates).length===0) return;
+      db.ref().update(updates).then(()=>{
+        tempAttendance = {};
+        refreshAnalytics();
+        loadStudents(assignedClass);
+      });
+    }
+
+    // ==== Realtime analytics (KPI + summary + sparkline) ====
+    async function refreshAnalytics(){
+      if(!assignedClass) return;
+      const d = selectedDate();
+      const students = allStudentsMap;
+      const total = students ? Object.keys(students).length : 0;
+
+      const snap = await db.ref(`attendance/${assignedClass}/${d}`).once("value");
+      const today = snap.val() || {};
+      let present=0, absent=0;
+      Object.values(today).forEach(v=>{ if(v==="Present") present++; if(v==="Absent") absent++; });
+
+      // Add staged marks to "Marked Today" preview
+      const stagedCount = Object.keys(tempAttendance).length;
+
+      // KPIs
+      document.getElementById('kpiPresent').textContent = present;
+      document.getElementById('kpiAbsent').textContent = absent;
+      const percentToday = total ? Math.round((present/total)*100) : 0;
+      document.getElementById('kpiPercent').textContent = percentToday + "%";
+
+      // Summary
+      document.getElementById('sumTotal').textContent = total;
+      document.getElementById('sumMarked').textContent = (present+absent) + (stagedCount?` (+${stagedCount} staged)`:``);
+      document.getElementById('sumPercent').textContent = percentToday + "%";
+
+      // 7-day trend sparkline
+      drawSparkline(await last7DaysPercent(assignedClass));
+    }
+
+    async function last7DaysPercent(classId){
+      // returns array of 7 numbers (oldest→newest) of daily present%
+      const out = [];
+      const students = allStudentsMap;
+      const total = students ? Object.keys(students).length : 0;
+      for(let i=6;i>=0;i--){
+        const dt = new Date(); dt.setDate(dt.getDate()-i);
+        const day = dt.toISOString().split('T')[0];
+        const snap = await db.ref(`attendance/${classId}/${day}`).once("value");
+        const val = snap.val() || {};
+        let present=0;
+        Object.values(val).forEach(v=>{ if(v==="Present") present++; });
+        out.push(total ? Math.round((present/total)*100) : 0);
       }
-
-      const studentId = "stu" + Date.now();
-
-      db.ref(`classes/${classId}/students/${studentId}`).set(studentName)
-        .then(() => {
-          status.style.color = "lightgreen";
-          status.textContent = `Student '${studentName}' added to class ${classId}.`;
-          document.getElementById("studentNameInput").value = "";
-          if (classId === assignedClass) loadStudents(assignedClass);
-        })
-        .catch(err => {
-          status.style.color = "red";
-          status.textContent = "Error: " + err.message;
-        });
+      return out;
     }
 
-    function logout() {
-      auth.signOut().then(() => {
-        window.location.href = "./index.html";
+    function drawSparkline(points){
+      const c = document.getElementById('trend'); if(!c) return;
+      const ctx = c.getContext('2d');
+      const w = c.width = c.offsetWidth, h = c.height = c.offsetHeight;
+      ctx.clearRect(0,0,w,h);
+      // axes (muted)
+      ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--border');
+      ctx.lineWidth = 1; ctx.beginPath();
+      ctx.moveTo(0,h-1); ctx.lineTo(w,h-1); ctx.stroke();
+
+      if(!points || !points.length) return;
+      const max = 100, min = 0;
+      const step = w / (points.length-1 || 1);
+      // line
+      ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--primary-2') || '#00a1b3';
+      ctx.lineWidth = 2; ctx.beginPath();
+      points.forEach((p,idx)=>{
+        const x = idx*step;
+        const y = h - ( (p-min)/(max-min) ) * h;
+        if(idx===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+      });
+      ctx.stroke();
+      // fill
+      const grd = ctx.createLinearGradient(0,0,0,h);
+      grd.addColorStop(0,'rgba(0,188,212,.35)');
+      grd.addColorStop(1,'rgba(0,188,212,0)');
+      ctx.fillStyle = grd; ctx.lineTo(w,h); ctx.lineTo(0,h); ctx.closePath(); ctx.fill();
+    }
+
+    // ==== Utilities ====
+    function filterStudents(){
+      const q = (document.getElementById('studentSearch').value || "").toLowerCase().trim();
+      const container = document.getElementById('studentContainer');
+      container.innerHTML = "";
+      studentCards.forEach(card=>{
+        const name = card.getAttribute('data-name') || '';
+        if(name.includes(q)) container.appendChild(card);
+      });
+      if(!container.children.length){
+        const div = document.createElement('div'); div.className='mini'; div.textContent='No students match your search.';
+        container.appendChild(div);
+      }
+    }
+
+    function downloadCSV(){
+      if(!assignedClass) return;
+      db.ref("classes/"+assignedClass+"/students").once("value").then(snapshot=>{
+        const students = snapshot.val(); if(!students) return;
+        let csv = "Student ID,Student Name\n";
+        for(const [id,name] of Object.entries(students)){ csv += `${id},${name}\n`; }
+        const blob = new Blob([csv],{type:"text/csv"}); const url = URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href = url; a.download = `${assignedClass}_students.csv`; a.click();
+        URL.revokeObjectURL(url);
       });
     }
-    // 🔄 Theme toggle logic
-function toggleTheme() {
-  const current = document.documentElement.getAttribute('data-theme') || 'light';
-  const next = current === 'dark' ? 'light' : 'dark';
-  document.documentElement.setAttribute('data-theme', next);
-  localStorage.setItem('theme', next);
-}
 
-// Load saved theme on page load
-window.onload = () => {
-  const saved = localStorage.getItem('theme') || 'light';
-  document.documentElement.setAttribute('data-theme', saved);
-};
-function filterStudents() {
-  const keyword = document.getElementById("studentSearch").value.toLowerCase().trim();
-  const container = document.getElementById("studentContainer");
-
-  container.innerHTML = ""; // clear all
-  studentCards.forEach(card => {
-    const name = card.getAttribute("data-name");
-    if (name.includes(keyword)) {
-      container.appendChild(card);
+    function uploadHomework(){
+      const hw = document.getElementById('homeworkText').value.trim();
+      const s = document.getElementById('homeworkStatus');
+      if(!hw){ s.style.color='var(--danger)'; s.textContent='Please enter homework.'; return; }
+      const d = selectedDate();
+      db.ref(`homework/${assignedClass}/${d}`).set(hw).then(()=>{
+        s.style.color='var(--success)'; s.textContent='Homework uploaded.'; document.getElementById('homeworkText').value="";
+      });
     }
-  });
-}
 
+    function deleteStudent(studentId, studentName){
+      if(!confirm(`Remove ${studentName}?`)) return;
+      db.ref(`classes/${assignedClass}/students/${studentId}`).remove().then(()=>{
+        loadStudents(assignedClass); refreshAnalytics();
+      });
+    }
+
+    function logout(){ auth.signOut().then(()=>location.href="./index.html"); }
   </script>
 </body>
 </html>
