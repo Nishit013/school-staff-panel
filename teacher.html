@@ -1,372 +1,239 @@
 <!DOCTYPE html>
 <html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <title>Teacher Dashboard</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #121212;
-      --card: #1e1e1e;
-      --text: #e0e0e0;
+      --bg: #f4f4f4;
+      --sidebar: #ffffff;
+      --card: #ffffff;
+      --text: #111111;
       --primary: #00bcd4;
       --accent: #0097a7;
+      --success: #21c064;
+      --danger: #ff4f4f;
+    }
+
+    [data-theme="dark"] {
+      --bg: #0f0f0f;
+      --sidebar: #141414;
+      --card: #1a1a1a;
+      --text: #f0f0f0;
     }
 
     * {
+      margin: 0;
+      padding: 0;
       box-sizing: border-box;
+      font-family: "Inter", sans-serif;
     }
 
     body {
-      margin: 0;
-      padding: 20px;
-      font-family: 'Inter', sans-serif;
-      background-color: var(--bg);
+      display: flex;
+      min-height: 100vh;
+      background: var(--bg);
       color: var(--text);
     }
 
+    /* Sidebar */
+    .sidebar {
+      width: 240px;
+      background: var(--sidebar);
+      padding: 20px;
+      box-shadow: 2px 0 12px rgba(0,0,0,0.2);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      height: 100vh;
+    }
+    .sidebar h2 {
+      margin-bottom: 20px;
+      color: var(--primary);
+    }
+    .sidebar a {
+      display: block;
+      padding: 10px 12px;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      text-decoration: none;
+      color: var(--text);
+      transition: 0.3s;
+    }
+    .sidebar a:hover {
+      background: var(--primary);
+      color: #fff;
+    }
+    .theme-toggle {
+      margin-top: auto;
+      padding: 8px 12px;
+      border: 2px solid var(--primary);
+      border-radius: 8px;
+      background: transparent;
+      color: var(--primary);
+      cursor: pointer;
+    }
+
+    /* Main */
+    .main {
+      margin-left: 240px;
+      padding: 20px;
+      flex: 1;
+    }
+
     h1 {
-      font-size: 28px;
-      margin-bottom: 10px;
+      font-size: 26px;
+      margin-bottom: 16px;
     }
 
     .card {
-      background-color: var(--card);
-      border-radius: 12px;
+      background: var(--card);
       padding: 20px;
-      margin-bottom: 24px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.4);
+      border-radius: 14px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      transition: 0.3s;
+    }
+    .card:hover {
+      transform: translateY(-2px);
     }
 
     button {
-      background-color: var(--primary);
-      color: white;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
       border: none;
-      padding: 8px 16px;
-      border-radius: 6px;
+      padding: 8px 14px;
+      border-radius: 8px;
+      color: #fff;
       font-weight: 600;
       cursor: pointer;
-      transition: background 0.2s;
+      transition: 0.3s;
     }
-
     button:hover {
-      background-color: var(--accent);
+      transform: scale(1.05);
     }
 
     input, textarea, select {
       width: 100%;
       padding: 10px;
       margin-top: 8px;
-      background-color: #222;
-      border: 1px solid #444;
-      border-radius: 6px;
+      margin-bottom: 10px;
+      border-radius: 8px;
+      border: 1px solid #aaa;
+      background: transparent;
       color: var(--text);
     }
 
-    .logout-btn {
-      float: right;
-      margin-top: -40px;
+    /* Student Grid */
+    .student-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 16px;
+      max-height: 420px;
+      overflow-y: auto;
+    }
+    .student-card {
+      background: var(--sidebar);
+      padding: 14px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    .student-card .name {
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+    .progress-bar {
+      height: 8px;
+      background: #ddd;
+      border-radius: 6px;
+      overflow: hidden;
+      margin: 6px 0;
+    }
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      transition: width 0.8s;
+    }
+    .progress-fill.present {
+      background: var(--success);
+    }
+    .progress-fill.absent {
+      background: var(--danger);
     }
 
-    .student-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 10px 0;
-      border-bottom: 1px solid #333;
-    }
-
-    .student-item:last-child {
-      border-bottom: none;
-    }
-
-    .status-msg {
-      margin-top: 10px;
-      font-size: 14px;
-    }
-
-    select {
-      background-color: #1c1c1c;
-    }
-
-    @media (max-width: 600px) {
-      .logout-btn {
-        float: none;
-        display: block;
-        margin-top: 10px;
+    @media (max-width: 768px) {
+      .sidebar {
+        position: fixed;
+        width: 200px;
+        left: -200px;
+        transition: left 0.3s;
+      }
+      .sidebar.open {
+        left: 0;
+      }
+      .main {
+        margin-left: 0;
+        padding: 16px;
       }
     }
-    .student-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-  gap: 16px;
-  max-height: 420px;
-  overflow-y: auto;
-  padding-right: 10px;
-}
-
-.student-card {
-  background-color: #1c1c1c;
-  padding: 16px;
-  border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-}
-
-.student-card .name {
-  font-size: 16px;
-  font-weight: 600;
-  margin-bottom: 8px;
-}
-
-.student-card .analytics {
-  font-size: 13px;
-  color: #bbb;
-  margin-bottom: 10px;
-}
-
-.student-card .actions button {
-  margin-right: 6px;
-}
-:root {
-  --bg: #f4f4f4;
-  --card: #ffffff;
-  --text: #111111;
-  --primary: #00bcd4;
-  --accent: #0097a7;
-  --success: #21c064;
-  --danger: #ff4f4f;
-  --glow: 0 0 10px rgba(0, 188, 212, 0.3);
-}
-
-/* Dark theme override */
-[data-theme="dark"] {
-  --bg: #0f0f0f;
-  --card: #1a1a1a;
-  --text: #f0f0f0;
-  --glow: 0 0 10px rgba(0, 188, 212, 0.5);
-}
-
-
-body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: 'Inter', sans-serif;
-  margin: 0;
-  padding: 20px;
-}
-
-h1 {
-  font-size: 30px;
-  margin-bottom: 20px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.card {
-  background: var(--card);
-  border-radius: 16px;
-  padding: 20px;
-  margin-bottom: 28px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-  transition: 0.3s ease;
-}
-
-.card:hover {
-  transform: scale(1.01);
-  box-shadow: 0 0 20px rgba(0, 188, 212, 0.1);
-}
-
-button {
-  background: linear-gradient(135deg, var(--primary), var(--accent));
-  border: none;
-  padding: 10px 18px;
-  border-radius: 8px;
-  color: white;
-  font-weight: 600;
-  cursor: pointer;
-  box-shadow: var(--glow);
-  transition: background 0.3s, transform 0.2s;
-}
-
-button:hover {
-  transform: scale(1.03);
-  background: linear-gradient(135deg, var(--accent), var(--primary));
-}
-
-.logout-btn {
-  float: right;
-  background: #00bcd4;
-  color: white;
-  padding: 8px 14px;
-  font-weight: bold;
-  border-radius: 8px;
-  box-shadow: var(--glow);
-  margin-top: -40px;
-}
-
-input, textarea, select {
-  width: 100%;
-  padding: 12px;
-  margin-top: 10px;
-  background: #222;
-  border: 1px solid #444;
-  border-radius: 10px;
-  color: var(--text);
-  font-size: 15px;
-  transition: border 0.3s, background 0.3s;
-}
-
-input:focus, textarea:focus, select:focus {
-  border: 1px solid var(--primary);
-  background: #1a1a1a;
-  outline: none;
-}
-
-.status-msg {
-  margin-top: 10px;
-  font-size: 14px;
-}
-
-.status-msg.green {
-  color: var(--success);
-}
-
-.status-msg.red {
-  color: var(--danger);
-}
-
-@media (max-width: 600px) {
-  .logout-btn {
-    float: none;
-    display: block;
-    margin-top: 10px;
-  }
-}
-.theme-toggle {
-  float: right;
-  margin-right: 10px;
-  background: transparent;
-  color: var(--text);
-  border: 2px solid var(--text);
-  padding: 6px 10px;
-  border-radius: 50px;
-  cursor: pointer;
-  font-size: 16px;
-  transition: all 0.3s;
-}
-
-.theme-toggle:hover {
-  background: var(--primary);
-  color: white;
-  border-color: var(--primary);
-}
-
-#studentSearch {
-  margin-bottom: 14px;
-  border-radius: 8px;
-  border: 1px solid #444;
-  background: #1c1c1c;
-  color: var(--text);
-  font-size: 14px;
-}
-#attendanceDate {
-  background: #1c1c1c;
-  border: 1px solid #444;
-  color: var(--text);
-  padding: 10px;
-  border-radius: 8px;
-}
-.progress-bar {
-  height: 10px;
-  width: 100%;
-  background: #2a2a2a;
-  border-radius: 6px;
-  margin-bottom: 10px;
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  width: 0%;
-  border-radius: 6px;
-  transition: width 0.8s ease-in-out;
-}
-
-.progress-fill.present {
-  background-color: var(--success);
-}
-
-.progress-fill.absent {
-  background-color: var(--danger);
-}
-
-.bar-label {
-  font-size: 13px;
-  margin: 6px 0 4px;
-}
-
   </style>
 </head>
-<body>
-
-  <h1>📚 Teacher Dashboard</h1>
-  <button class="logout-btn" onclick="logout()">🚪 Logout</button>
-
-  <div class="card">
-    <strong>👩‍🏫 Teacher:</strong> <span id="teacherName"></span><br />
-    <strong>📘 Current Class:</strong> <span id="className"></span><br><br>
-
-    <label><strong>📂 Select Your Class:</strong></label>
-    <select id="classSelector" onchange="onClassSelect(this.value)">
-      <option value="">-- Select --</option>
-    </select>
+<body data-theme="dark">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <h2>📚 Teacher</h2>
+    <a href="#class">🏫 Classes</a>
+    <a href="#students">👥 Students</a>
+    <a href="#homework">✏️ Homework</a>
+    <a href="#analytics">📊 Analytics</a>
+    <button class="theme-toggle" onclick="toggleTheme()">🌙 Theme</button>
   </div>
 
-  <div class="card">
-    <h3>🏫 Class & Student Manager</h3>
-    <label>➕ Add New Class:</label>
-    <input type="text" id="newClassInput" placeholder="e.g. 6B" />
-    <button onclick="addNewClass()">Create Class</button>
-    <div id="classStatus" class="status-msg"></div>
+  <!-- Main Content -->
+  <div class="main">
+    <h1>👩‍🏫 Teacher Dashboard</h1>
 
-    <br><br>
+    <div class="card" id="class">
+      <h3>🏫 Class Manager</h3>
+      <label>Add Class:</label>
+      <input type="text" placeholder="e.g. 6B" />
+      <button>Create</button>
+    </div>
 
-    <label>➕ Add Student to Class:</label>
-    <input type="text" id="classForStudent" placeholder="e.g. 6A" />
-    <input type="text" id="studentNameInput" placeholder="Student Name" />
-    <button onclick="addStudent()">Add Student</button>
-    <div id="studentStatus" class="status-msg"></div>
+    <div class="card" id="students">
+      <h3>👥 Student List</h3>
+      <input type="date" />
+      <input type="text" placeholder="🔍 Search student..." />
+      <div class="student-grid">
+        <div class="student-card">
+          <div class="name">John Doe</div>
+          <div class="progress-bar"><div class="progress-fill present" style="width: 80%"></div></div>
+          <small>Attendance: 80%</small>
+        </div>
+        <div class="student-card">
+          <div class="name">Jane Smith</div>
+          <div class="progress-bar"><div class="progress-fill present" style="width: 95%"></div></div>
+          <small>Attendance: 95%</small>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" id="homework">
+      <h3>✏️ Upload Homework</h3>
+      <textarea rows="4" placeholder="Write homework here..."></textarea>
+      <button>Upload</button>
+    </div>
   </div>
-<div class="card">
-  <h3>👥 Student List</h3>
 
-  <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 12px;">
-    <input type="date" id="attendanceDate" onchange="loadStudents(assignedClass)" />
-    <input type="text" id="studentSearch" placeholder="🔍 Search student..." oninput="filterStudents()" />
-    <button onclick="downloadCSV()">⬇️ Download Student List</button>
-  </div>
+  <script>
+    function toggleTheme(){
+      document.body.dataset.theme =
+        document.body.dataset.theme === "dark" ? "light" : "dark";
+    }
+  </script>
 
-  <div id="studentContainer" class="student-grid">Loading...</div>
-</div>
-
-  <div class="card">
-    <h3>✏️ Upload Homework</h3>
-    <textarea id="homeworkText" rows="4" placeholder="Write homework here..."></textarea><br />
-    <button onclick="uploadHomework()">Upload Homework</button>
-    <div id="homeworkStatus" class="status-msg"></div>
-  </div>
-<!-- Same <head> and styles, only body and scripts are updated -->
-<!-- ... Keep your <head> as-is ... -->
-
-<!-- Inside body: -->
-
-
-
-<button onclick="toggleTheme()" class="theme-toggle">🌓</button>
 
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
