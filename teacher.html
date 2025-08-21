@@ -365,7 +365,16 @@
           if(day[id]==="Present") presentCount++;
           if(day[id]==="Absent")  absentCount++;
         });
-        const statusToday = attendanceToday[id] ? attendanceToday[id] : (tempAttendance[id] || "Not Marked");
+        let statusToday;
+if (tempAttendance[id]) {
+  statusToday = `${tempAttendance[id]} (Pending)`; 
+} else if (attendanceToday[id]) {
+  statusToday = attendanceToday[id];
+} else {
+  statusToday = "Not Marked";
+}
+
+
 
 
         // Build card
@@ -459,6 +468,11 @@
     loadStudents(assignedClass); // re-render cards with new staged status
   });
 }
+function cancelPending(studentId) {
+  delete tempAttendance[studentId];
+  loadStudents(assignedClass); 
+  updateConfirmAllButton();
+}
 
 
     function confirmAttendance(studentId, studentName){
@@ -476,24 +490,37 @@
 }
 
 
-    function confirmAll(){
+   function confirmAll() {
   const d = selectedDate();
   const updates = {};
 
-  Object.entries(tempAttendance).forEach(([sid,st])=>{
+  Object.entries(tempAttendance).forEach(([sid, st]) => {
     updates[`attendance/${assignedClass}/${d}/${sid}`] = st;
   });
 
-  if(Object.keys(updates).length===0){
+  if (Object.keys(updates).length === 0) {
     alert("No staged attendance to confirm.");
     return;
   }
 
-  db.ref().update(updates).then(()=>{
-    tempAttendance = {};  // clear staging
-    loadStudents(assignedClass); 
+  db.ref().update(updates).then(() => {
+    tempAttendance = {};  // clear all pending marks
+    loadStudents(assignedClass);
     refreshAnalytics();
+    updateConfirmAllButton(); // <-- update button label
   });
+}
+
+
+
+
+function updateConfirmAllButton() {
+  const pendingCount = Object.keys(tempAttendance).length;
+  const btn = document.querySelector(".controls .btn.primary");
+  if (!btn) return;
+  btn.textContent = pendingCount > 0
+    ? `✅ Confirm All (${pendingCount} pending)`
+    : "✅ Confirm All";
 }
 
 
