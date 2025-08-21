@@ -462,29 +462,40 @@
 
 
     function confirmAttendance(studentId, studentName){
-      const d = selectedDate();
-      const finalStatus = tempAttendance[studentId];
-      if(!finalStatus) return;
-      db.ref(`attendance/${assignedClass}/${d}/${studentId}`).set(finalStatus).then(()=>{
-        delete tempAttendance[studentId];
-        refreshAnalytics();
-        loadStudents(assignedClass);
-      });
-    }
+  const d = selectedDate();
+  const status = tempAttendance[studentId]; 
+  if(!status) return;
+
+  db.ref(`attendance/${assignedClass}/${d}/${studentId}`).set(status)
+    .then(()=>{
+      // Remove from staged after saving
+      delete tempAttendance[studentId];  
+      loadStudents(assignedClass); 
+      refreshAnalytics();
+    });
+}
+
 
     function confirmAll(){
-      const d = selectedDate();
-      const updates = {};
-      Object.entries(tempAttendance).forEach(([sid,st])=>{
-        updates[`attendance/${assignedClass}/${d}/${sid}`] = st;
-      });
-      if(Object.keys(updates).length===0) return;
-      db.ref().update(updates).then(()=>{
-        tempAttendance = {};
-        refreshAnalytics();
-        loadStudents(assignedClass);
-      });
-    }
+  const d = selectedDate();
+  const updates = {};
+
+  Object.entries(tempAttendance).forEach(([sid,st])=>{
+    updates[`attendance/${assignedClass}/${d}/${sid}`] = st;
+  });
+
+  if(Object.keys(updates).length===0){
+    alert("No staged attendance to confirm.");
+    return;
+  }
+
+  db.ref().update(updates).then(()=>{
+    tempAttendance = {};  // clear staging
+    loadStudents(assignedClass); 
+    refreshAnalytics();
+  });
+}
+
 
     // ==== Realtime analytics (KPI + summary + sparkline) ====
     async function refreshAnalytics(){
