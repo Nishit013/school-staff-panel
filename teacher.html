@@ -340,83 +340,90 @@
     }
 
     // ==== Load students + build cards ====
-    async function loadStudents(classId){
-      const container = document.getElementById('studentContainer');
-      container.innerHTML = "Loading…";
-      studentCards = [];
-      if(!classId){ container.innerHTML = "Select a class."; return; }
+    async function loadStudents(classId) {
+  const container = document.getElementById('studentContainer');
+  container.innerHTML = "Loading…";
+  studentCards = [];
+  if (!classId) { 
+    container.innerHTML = "Select a class."; 
+    return; 
+  }
 
-      const studentsSnap = await db.ref(`classes/${classId}/students`).once("value");
-      const students = studentsSnap.val();
-      allStudentsMap = students || {};
-      if(!students){ container.innerHTML = "No students in this class."; return; }
+  const studentsSnap = await db.ref(`classes/${classId}/students`).once("value");
+  const students = studentsSnap.val();
+  allStudentsMap = students || {};
+  if (!students) { 
+    container.innerHTML = "No students in this class."; 
+    return; 
+  }
 
-      const d = selectedDate();
-      const todaySnap = await db.ref(`attendance/${classId}/${d}`).once("value");
-      const attendanceToday = todaySnap.val() || {};
+  const d = selectedDate();
+  const todaySnap = await db.ref(`attendance/${classId}/${d}`).once("value");
+  const attendanceToday = todaySnap.val() || {};
 
-      container.innerHTML = "";
-      for(const [id,name] of Object.entries(students)){
-        // Totals over all time
-        const allDaysSnap = await db.ref(`attendance/${classId}`).once("value");
-        const allDays = allDaysSnap.val() || {};
-        let presentCount=0, absentCount=0;
-        Object.values(allDays).forEach(day=>{
-          if(day[id]==="Present") presentCount++;
-          if(day[id]==="Absent")  absentCount++;
-        });
-        let statusToday;
-if (tempAttendance[id]) {
-  statusToday = `${tempAttendance[id]} (Pending)`; 
-} else if (attendanceToday[id]) {
-  statusToday = attendanceToday[id];
-} else {
-  statusToday = "Not Marked";
-}
+  // Cache all attendance once instead of fetching for every student
+  const allDaysSnap = await db.ref(`attendance/${classId}`).once("value");
+  const allDays = allDaysSnap.val() || {};
 
+  container.innerHTML = "";
+  for (const [id, name] of Object.entries(students)) {
+    // Totals over all time
+    let presentCount = 0, absentCount = 0;
+    Object.values(allDays).forEach(day => {
+      if (day[id] === "Present") presentCount++;
+      if (day[id] === "Absent") absentCount++;
+    });
 
-
-
-        // Build card
-        const card = document.createElement('div');
-        card.className = "student";
-        card.setAttribute("data-name", name.toLowerCase());
-        card.innerHTML = `
-          <div class="row">
-            <div class="name">${name}</div>
-            <div class="stats">
-              📅 ${d} • Today: <strong>${statusToday}</strong> •
-              ✅ ${presentCount} | ❌ ${absentCount}
-            </div>
-          </div>
-          <div>
-            <div class="bar-label">✅ Present %</div>
-            <div class="bar"><div class="fill present"></div></div>
-            <div class="bar-label">❌ Absent %</div>
-            <div class="bar"><div class="fill absent"></div></div>
-          </div>
-          <div class="row">
-            <div class="actions">
-              <button class="btn present" onclick="stageAttendance('${id}','${name}','Present')">Present</button>
-              <button class="btn absent"  onclick="stageAttendance('${id}','${name}','Absent')">Absent</button>
-              ${(!attendanceToday[id] && tempAttendance[id]) ? `<button class="btn confirm" onclick="confirmAttendance('${id}','${name}')">✅ Confirm</button>` : ``}
-            </div>
-            <button class="btn ghost" onclick="deleteStudent('${id}','${name}')">🗑️ Delete</button>
-          </div>
-        `;
-
-        // Animate bars
-        setTimeout(()=>{
-          const total = (presentCount+absentCount)||1;
-          card.querySelector('.fill.present').style.width = `${(presentCount/total)*100}%`;
-          card.querySelector('.fill.absent').style.width  = `${(absentCount/total)*100}%`;
-        }, 40);
-
-        container.appendChild(card);
-        studentCards.push(card);
-      }
-      filterStudents(); // apply search filter if any
+    // Status for today
+    let statusToday;
+    if (tempAttendance[id]) {
+      statusToday = `${tempAttendance[id]} (Pending)`;  // show staged immediately
+    } else if (attendanceToday[id]) {
+      statusToday = attendanceToday[id];               // confirmed
+    } else {
+      statusToday = "Not Marked";
     }
+
+    // Build card
+    const card = document.createElement('div');
+    card.className = "student";
+    card.setAttribute("data-name", name.toLowerCase());
+    card.innerHTML = `
+      <div class="row">
+        <div class="name">${name}</div>
+        <div class="stats">
+          📅 ${d} • Today: <strong>${statusToday}</strong> •
+          ✅ ${presentCount} | ❌ ${absentCount}
+        </div>
+      </div>
+      <div>
+        <div class="bar-label">✅ Present %</div>
+        <div class="bar"><div class="fill present"></div></div>
+        <div class="bar-label">❌ Absent %</div>
+        <div class="bar"><div class="fill absent"></div></div>
+      </div>
+      <div class="row">
+        <div class="actions">
+          <button class="btn present" onclick="stageAttendance('${id}','${name}','Present')">Present</button>
+          <button class="btn absent"  onclick="stageAttendance('${id}','${name}','Absent')">Absent</button>
+          ${tempAttendance[id] ? `<button class="btn confirm" onclick="confirmAttendance('${id}','${name}')">✅ Confirm</button>` : ``}
+        </div>
+        <button class="btn ghost" onclick="deleteStudent('${id}','${name}')">🗑️ Delete</button>
+      </div>
+    `;
+
+    // Animate bars
+    setTimeout(() => {
+      const total = (presentCount + absentCount) || 1;
+      card.querySelector('.fill.present').style.width = `${(presentCount / total) * 100}%`;
+      card.querySelector('.fill.absent').style.width  = `${(absentCount / total) * 100}%`;
+    }, 40);
+
+    container.appendChild(card);
+    studentCards.push(card);
+  }
+  filterStudents(); // apply search filter if any
+}
 
 
 
@@ -454,20 +461,25 @@ if (tempAttendance[id]) {
 
 
     // ==== Staging + confirm workflow ====
-    function stageAttendance(studentId, studentName, status){
+    function stageAttendance(studentId, studentName, status) {
   const d = selectedDate();
+
   // Check if already confirmed in DB
-  db.ref(`attendance/${assignedClass}/${d}/${studentId}`).once('value').then(s=>{
-    if(s.exists()){ 
-      // Already confirmed => do not allow change
+  db.ref(`attendance/${assignedClass}/${d}/${studentId}`).once('value').then(s => {
+    if (s.exists()) {
       alert("Attendance already confirmed for this student.");
       return;
     }
-    // Stage the change (overwrite previous staged value if any)
+
+    // Stage locally
     tempAttendance[studentId] = status;
-    loadStudents(assignedClass); // re-render cards with new staged status
+
+    // Refresh UI
+    loadStudents(assignedClass);
+    updateConfirmAllButton();  // <-- keep confirm button in sync
   });
 }
+
 function cancelPending(studentId) {
   delete tempAttendance[studentId];
   loadStudents(assignedClass); 
