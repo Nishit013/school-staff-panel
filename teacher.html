@@ -378,71 +378,68 @@
 
   container.innerHTML = "";
   for (const [id, name] of Object.entries(students)) {
-    // Totals over all time
-    let presentCount = 0, absentCount = 0;
-    Object.values(allDays).forEach(day => {
-      if (day[id] === "Present") presentCount++;
-      if (day[id] === "Absent") absentCount++;
-    });
+  // Totals over all time
+  let presentCount = 0, absentCount = 0;
+  Object.values(allDays).forEach(day => {
+    if (day[id] === "Present") presentCount++;
+    if (day[id] === "Absent") absentCount++;
+  });
 
-    // Status for today
-    let statusToday;
-    if (tempAttendance[id]) {
-      statusToday = `${tempAttendance[id]} (Pending)`;  // show staged immediately
-    } else if (attendanceToday[id]) {
-      statusToday = attendanceToday[id];               // confirmed
-    } else {
-      statusToday = "Not Marked";
-    }
-
-    // Build card
-    card.setAttribute("data-id", id);
-
-    const card = document.createElement('div');
-    card.className = "student";
-
-    card.setAttribute("data-id", id);
-
-    card.setAttribute("data-name", name.toLowerCase());
-    card.innerHTML = `
-      <div class="row">
-        <div class="name">${name}</div>
-        <div class="stats">
-          📅 ${d} • Today: <strong>${statusToday}</strong> •
-          ✅ ${presentCount} | ❌ ${absentCount}
-        </div>
-      </div>
-      <div>
-        <div class="bar-label">✅ Present %</div>
-        <div class="bar"><div class="fill present"></div></div>
-        <div class="bar-label">❌ Absent %</div>
-        <div class="bar"><div class="fill absent"></div></div>
-      </div>
-      <div class="row">
-        <div class="actions">
-          <button class="btn present ${tempAttendance[id]==='Present' ? 'selected' : ''}" 
-        onclick="stageAttendance('${id}','${name}','Present')">Present</button>
-<button class="btn absent ${tempAttendance[id]==='Absent' ? 'selected' : ''}" 
-        onclick="stageAttendance('${id}','${name}','Absent')">Absent</button>
-${tempAttendance[id] ? 
-  `<button class="btn confirm" onclick="confirmAttendance('${id}','${name}')">✅ Confirm</button>` 
-  : ``}
-
-        </div>
-        <button class="btn ghost" onclick="deleteStudent('${id}','${name}')">🗑️ Delete</button>
-      </div>
-    `;
-
-    // Animate bars
-    setTimeout(() => {
-      const total = (presentCount + absentCount) || 1;
-      card.querySelector('.fill.present').style.width = `${(presentCount / total) * 100}%`;
-      card.querySelector('.fill.absent').style.width  = `${(absentCount / total) * 100}%`;
-    }, 40);
-
-    container.appendChild(card);
-    studentCards.push(card);
+  // Status for today
+  let statusToday;
+  if (tempAttendance[id]) {
+    statusToday = `${tempAttendance[id]} (Pending)`;  // staged immediately
+  } else if (attendanceToday[id]) {
+    statusToday = attendanceToday[id];               // confirmed
+  } else {
+    statusToday = "Not Marked";
   }
+
+  // ✅ Create card FIRST
+  const card = document.createElement('div');
+  card.className = "student";
+  card.setAttribute("data-id", id);
+  card.setAttribute("data-name", name.toLowerCase());
+
+  card.innerHTML = `
+    <div class="row">
+      <div class="name">${name}</div>
+      <div class="stats">
+        📅 ${d} • Today: <strong>${statusToday}</strong> •
+        ✅ ${presentCount} | ❌ ${absentCount}
+      </div>
+    </div>
+    <div>
+      <div class="bar-label">✅ Present %</div>
+      <div class="bar"><div class="fill present"></div></div>
+      <div class="bar-label">❌ Absent %</div>
+      <div class="bar"><div class="fill absent"></div></div>
+    </div>
+    <div class="row">
+      <div class="actions">
+        <button class="btn present ${tempAttendance[id]==='Present' ? 'selected' : ''}" 
+          onclick="stageAttendance('${id}','${name}','Present')">Present</button>
+        <button class="btn absent ${tempAttendance[id]==='Absent' ? 'selected' : ''}" 
+          onclick="stageAttendance('${id}','${name}','Absent')">Absent</button>
+        ${tempAttendance[id] ? 
+          `<button class="btn confirm" onclick="confirmAttendance('${id}','${name}')">✅ Confirm</button>` 
+          : ``}
+      </div>
+      <button class="btn ghost" onclick="deleteStudent('${id}','${name}')">🗑️ Delete</button>
+    </div>
+  `;
+
+  // Animate bars
+  setTimeout(() => {
+    const total = (presentCount + absentCount) || 1;
+    card.querySelector('.fill.present').style.width = `${(presentCount / total) * 100}%`;
+    card.querySelector('.fill.absent').style.width  = `${(absentCount / total) * 100}%`;
+  }, 40);
+
+  container.appendChild(card);
+  studentCards.push(card);
+}
+
   filterStudents(); // apply search filter if any
 }
 
