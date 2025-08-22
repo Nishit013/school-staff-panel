@@ -616,8 +616,14 @@ function updateConfirmAllButton() {
 
       // Summary
       document.getElementById('sumTotal').textContent = total;
-      document.getElementById('sumMarked').textContent = (present+absent) + (stagedCount?` (+${stagedCount} staged)`:``);
-      document.getElementById('sumPercent').textContent = percentToday + "%";
+      // Show total confirmed marks + preview of staged
+document.getElementById('sumMarked').textContent =
+  (present + absent) + (stagedCount ? ` (+${stagedCount} staged)` : ``);
+
+// Percent is only based on confirmed data, NOT staged
+const confirmedPercent = total ? Math.round(((present + absent) / total) * 100) : 0;
+document.getElementById('sumPercent').textContent = confirmedPercent + "%";
+
 
       // 7-day trend sparkline
       drawSparkline(await last7DaysPercent(assignedClass));
