@@ -561,10 +561,22 @@ function cancelPending(studentId) {
   }
 
   db.ref().update(updates).then(() => {
-    tempAttendance = {};  // clear all pending marks
-    loadStudents(assignedClass);
+    // Update cards inline
+    Object.entries(updates).forEach(([path, status]) => {
+      const sid = path.split("/").pop(); // extract studentId
+      const card = studentCards.find(c => c.getAttribute("data-id") === sid);
+      if (card) {
+        card.querySelector(".stats strong").textContent = status;
+        const confirmBtn = card.querySelector(".btn.confirm");
+        if (confirmBtn) confirmBtn.remove();
+        card.querySelectorAll(".btn.present, .btn.absent")
+            .forEach(btn => btn.classList.remove("selected"));
+      }
+    });
+
+    tempAttendance = {}; // clear staged
     refreshAnalytics();
-    updateConfirmAllButton(); // <-- update button label
+    updateConfirmAllButton();
   });
 }
 
