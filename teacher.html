@@ -594,40 +594,47 @@ function updateConfirmAllButton() {
 
 
     // ==== Realtime analytics (KPI + summary + sparkline) ====
-    async function refreshAnalytics(){
-      if(!assignedClass) return;
-      const d = selectedDate();
-      const students = allStudentsMap;
-      const total = students ? Object.keys(students).length : 0;
+    async function refreshAnalytics() {
+  if (!assignedClass) return;
 
-      const snap = await db.ref(`attendance/${assignedClass}/${d}`).once("value");
-      const today = snap.val() || {};
-      let present=0, absent=0;
-      Object.values(today).forEach(v=>{ if(v==="Present") present++; if(v==="Absent") absent++; });
+  const d = selectedDate();
+  const students = allStudentsMap;
+  const total = students ? Object.keys(students).length : 0;
 
-      // Add staged marks to "Marked Today" preview
-      const stagedCount = Object.keys(tempAttendance).length;
+  // Fetch confirmed attendance from Firebase
+  const snap = await db.ref(`attendance/${assignedClass}/${d}`).once("value");
+  const today = snap.val() || {};
+  let present = 0, absent = 0;
 
-      // KPIs
-      document.getElementById('kpiPresent').textContent = present;
-      document.getElementById('kpiAbsent').textContent = absent;
-      const percentToday = total ? Math.round((present/total)*100) : 0;
-      document.getElementById('kpiPercent').textContent = percentToday + "%";
+  Object.values(today).forEach(v => {
+    if (v === "Present") present++;
+    if (v === "Absent") absent++;
+  });
 
-      // Summary
-      document.getElementById('sumTotal').textContent = total;
-      // Show total confirmed marks + preview of staged
-document.getElementById('sumMarked').textContent =
-  (present + absent) + (stagedCount ? ` (+${stagedCount} staged)` : ``);
+  // Count staged (unconfirmed) attendance
+  const stagedCount = Object.keys(tempAttendance).length;
 
-// Percent is only based on confirmed data, NOT staged
-const confirmedPercent = total ? Math.round(((present + absent) / total) * 100) : 0;
-document.getElementById('sumPercent').textContent = confirmedPercent + "%";
+  // KPIs (percentage now includes staged)
+  const totalMarkedWithStaged = present + absent + stagedCount;
+  const percentToday = total ? Math.round((totalMarkedWithStaged / total) * 100) : 0;
 
+  document.getElementById('kpiPresent').textContent = present;
+  document.getElementById('kpiAbsent').textContent = absent;
+  document.getElementById('kpiPercent').textContent = percentToday + "%";
 
-      // 7-day trend sparkline
-      drawSparkline(await last7DaysPercent(assignedClass));
-    }
+  // Summary
+  document.getElementById('sumTotal').textContent = total;
+  document.getElementById('sumMarked').textContent =
+    (present + absent) + (stagedCount ? ` (+${stagedCount} staged)` : ``);
+
+  // Percent based only on confirmed marks
+  const confirmedPercent = total ? Math.round(((present + absent) / total) * 100) : 0;
+  document.getElementById('sumPercent').textContent = confirmedPercent + "%";
+
+  // 7-day trend sparkline
+  drawSparkline(await last7DaysPercent(assignedClass));
+}
+
 
     async function last7DaysPercent(classId){
       // returns array of 7 numbers (oldest→newest) of daily present%
