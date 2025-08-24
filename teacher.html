@@ -448,6 +448,8 @@
     // Example function to add student
 function addStudent() {
   const name = document.getElementById('newStudentName').value.trim();
+  const email = document.getElementById('newStudentEmail').value.trim();
+  const password = document.getElementById('newStudentPassword').value.trim();
   const s = document.getElementById('addStudentStatus');
 
   if (!assignedClass) {
@@ -455,29 +457,38 @@ function addStudent() {
     s.textContent = 'Please select a class first.';
     return;
   }
-  if (!name) {
+  if (!name || !email || !password) {
     s.style.color = 'var(--danger)';
-    s.textContent = 'Enter a valid student name.';
+    s.textContent = 'Enter name, email, and password.';
     return;
   }
 
   // Create unique ID
   const newId = db.ref(`classes/${assignedClass}/students`).push().key;
 
-  // Store as an object instead of just string
   const studentData = {
     name: name,
+    email: email,
+    role: "student",
+    class: assignedClass,
     createdAt: Date.now(),
     totalPresent: 0,
     totalAbsent: 0
   };
 
-  db.ref(`classes/${assignedClass}/students/${newId}`).set(studentData)
+  // Save in both places
+  const updates = {};
+  updates[`classes/${assignedClass}/students/${newId}`] = studentData;
+  updates[`users/${newId}`] = studentData;
+
+  db.ref().update(updates)
     .then(() => {
       s.style.color = 'var(--success)';
       s.textContent = `Added ${name} ✅`;
       document.getElementById('newStudentName').value = "";
-      loadStudents(assignedClass); // refresh list
+      document.getElementById('newStudentEmail').value = "";
+      document.getElementById('newStudentPassword').value = "";
+      loadStudents(assignedClass);
       refreshAnalytics();
     })
     .catch(err => {
@@ -485,6 +496,7 @@ function addStudent() {
       s.textContent = 'Error: ' + err.message;
     });
 }
+
 
 
 
