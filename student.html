@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Student Panel</title>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  body { font-family: sans-serif; background:#f0f2f5; margin:0; padding:0; }
+  .container { width:90%; max-width:900px; margin:20px auto; }
+  #loginPanel, #dashboard { background:white; padding:20px; border-radius:10px; box-shadow:0 2px 10px rgba(0,0,0,0.1); }
+  .hidden { display:none; }
+  table { width:100%; border-collapse:collapse; margin-top:20px; }
+  table, th, td { border:1px solid #ddd; }
+  th, td { padding:8px; text-align:left; }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- Login Panel -->
+  <div id="loginPanel">
+    <h2>Student Login</h2>
+    <input type="email" id="studentEmail" placeholder="Email" /><br><br>
+    <input type="password" id="studentPassword" placeholder="Password" /><br><br>
+    <button onclick="studentLogin()">Login</button>
+    <p id="loginError" style="color:red;"></p>
+  </div>
+
+  <!-- Student Dashboard -->
+  <div id="dashboard" class="hidden">
+    <h2>Welcome, <span id="studentName"></span></h2>
+
+    <!-- Attendance Summary -->
+    <h3>Attendance Summary</h3>
+    <p>Total Days: <span id="totalDays"></span>, Present: <span id="daysPresent"></span>, Absent: <span id="daysAbsent"></span></p>
+    <canvas id="attendanceChart" width="400" height="150"></canvas>
+
+    <!-- Homework List -->
+    <h3>Homework</h3>
+    <table id="homeworkTable">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Homework</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+</div>
+
+<script>
+  // Firebase Config (replace with your keys)
+  const firebaseConfig = {
+    apiKey: "AIzaSyCfffexgO1rf6m6EteNNtFb_kZnRqqTUBM",
+      authDomain: "schoolmanagementsystem-32895.firebaseapp.com",
+      databaseURL: "https://schoolmanagementsystem-32895-default-rtdb.firebaseio.com",
+      projectId: "schoolmanagementsystem-32895",
+      storageBucket: "schoolmanagementsystem-32895.appspot.com",
+      messagingSenderId: "837516759841",
+      appId: "1:837516759841:web:31d6666b15037082fa6460"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+  const auth = firebase.auth();
+
+  let currentStudent = null;
+
+  async function studentLogin() {
+    const email = document.getElementById('studentEmail').value;
+    const password = document.getElementById('studentPassword').value;
+    document.getElementById('loginError').textContent = '';
+
+    try {
+      const userCredential = await auth.signInWithEmailAndPassword(email, password);
+      currentStudent = userCredential.user;
+
+      // Fetch user details from users/
+      const snap = await db.ref(`users/${currentStudent.uid}`).once('value');
+      const userData = snap.val();
+
+      if (!userData || userData.role !== "student") {
+        document.getElementById('loginError').textContent = "Not a student account!";
+        return;
+      }
+
+      document.getElementById('studentName').textContent = userData.name;
+      document.getElementById('loginPanel').classList.add('hidden');
+      document.getElementById('dashboard').classList.remove('hidden');
+
+      // Load attendance and homework
+      loadAttendance(userData.class, currentStudent.uid);
+      loadHomework(userData.class);
+
+    } catch (err) {
+      document.getElementById('loginError').textContent = err.message;
+    }
+  }
+
+  // Load Attendance for student
+  async function loadAttendance(className, studentUID) {
+    const snap = await db.ref(`attendance/${className}`).once('value');
+    const data = snap.val() || {};
+
+    let totalDays = 0, present = 0, absent = 0;
+    const monthlyCounts = {};
+
+    Object.keys(data).forEach(date => {
+      const status = data[date][studentUID];
+      if (!status) return;
+      totalDays++;
+      if (status === "Present") present++;
+      if (status === "Absent") absent++;
+
+      const monthKey = date.slice(0,7); // YYYY-MM
+      if(!monthlyCounts[monthKey]) monthlyCounts[monthKey] = { present:0, total:0 };
+      monthlyCounts[monthKey].total++;
+      if(status==="Present") monthlyCounts[monthKey].present++;
+    });
+
+    document.getElementById('totalDays').textContent = totalDays;
+    document.getElementById('daysPresent').textContent = present;
+    document.getElementById('daysAbsent').textContent = absent;
+
+    // Draw Chart
+    const labels = Object.keys(monthlyCounts).sort();
+    const dataPoints = labels.map(m => Math.round((monthlyCounts[m].present / monthlyCounts[m].total)*100));
+    const ctx = document.getElementById('attendanceChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: '% Attendance',
+          data: dataPoints,
+          backgroundColor: 'rgba(54, 162, 235, 0.6)'
+        }]
+      },
+      options: { responsive:true, scales:{y:{beginAtZero:true, max:100}} }
+    });
+  }
+
+  // Load Homework
+  async function loadHomework(className) {
+    const snap = await db.ref(`homework/${className}`).once('value');
+    const data = snap.val() || {};
+    const tbody = document.querySelector('#homeworkTable tbody');
+    tbody.innerHTML = '';
+
+    const sortedDates = Object.keys(data).sort((a,b)=> new Date(b) - new Date(a));
+    sortedDates.forEach(date => {
+      const hw = data[date];
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${date}</td>
+        <td>${hw}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+</script>
+
+</body>
+</html>
