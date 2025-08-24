@@ -176,40 +176,46 @@
 
 
   // 4. 🔑 Your given code → Listen for auth state changes
+  
+  // Listen for login/logout state changes
   auth.onAuthStateChanged(async (user) => {
     if (user) {
       currentStudent = user;
+
+      // fetch student data from database
       const snap = await db.ref(`users/${user.uid}`).once('value');
       const userData = snap.val();
 
       if (userData && userData.role === "student") {
+        // show student info
         document.getElementById('studentName').textContent = userData.name;
         document.getElementById('studentClass').textContent = userData.class;
         document.getElementById('studentEmailShow').textContent = userData.email;
 
-        // ✅ Show dashboard, hide login
+        // hide login, show dashboard
         document.getElementById('loginPanel').style.display = "none";
         document.getElementById('dashboard').style.display = "block";
 
-        // Load attendance & homework
+        // load attendance + homework
         loadAttendance(userData.class, user.uid);
         loadHomework(userData.class);
+      } else {
+        document.getElementById('loginError').textContent = "Not a student account!";
+        await auth.signOut();
       }
     } else {
-      // ❌ No user logged in → show login
+      // no one logged in → show login page
       document.getElementById('loginPanel').style.display = "block";
       document.getElementById('dashboard').style.display = "none";
     }
   });
 
+  // Logout function
+  function logout() {
+    auth.signOut();
+  }
+</script>
 
-
-function logout() {
-  auth.signOut().then(() => {
-    document.getElementById('dashboard').style.display = "none";
-    document.getElementById('loginPanel').style.display = "block";
-  });
-}
 
 
   // Load Attendance for student
