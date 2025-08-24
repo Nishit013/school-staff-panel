@@ -88,47 +88,55 @@
 <body>
   <div class="nav">
     <div class="brand"><div class="logo">🎓</div> Student Panel</div>
-    <div class="nav-actions">
-      <button class="btn ghost" onclick="logout()">Logout</button>
-    </div>
   </div>
 
   <div class="wrap">
-    <!-- Profile -->
-    <div class="profile">
-      <h2 id="studentName">Student Name</h2>
-      <div class="meta">Class: <span id="studentClass">--</span></div>
-      <div class="meta">Email: <span id="studentEmail">--</span></div>
+
+    <!-- LOGIN PANEL -->
+    <div id="loginPanel" class="profile">
+      <h2>Student Login</h2>
+      <div>
+        <input type="email" id="studentEmail" placeholder="Email" style="padding:8px; width:100%; margin:5px 0; border-radius:8px;">
+        <input type="password" id="studentPassword" placeholder="Password" style="padding:8px; width:100%; margin:5px 0; border-radius:8px;">
+        <button class="btn primary" onclick="studentLogin()">Login</button>
+        <div id="loginError" style="color:var(--danger); margin-top:8px;"></div>
+      </div>
     </div>
 
-    <!-- KPIs -->
-    <div class="analytics">
-      <div class="kpi"><div class="icon green">✔</div><div><div class="meta">Total Present</div><div id="kpiPresent" class="val">0</div></div></div>
-      <div class="kpi"><div class="icon red">✖</div><div><div class="meta">Total Absent</div><div id="kpiAbsent" class="val">0</div></div></div>
-      <div class="kpi"><div class="icon blue">%</div><div><div class="meta">Attendance %</div><div id="kpiPercent" class="val">0%</div></div></div>
-    </div>
+    <!-- DASHBOARD (hidden until login) -->
+    <div id="dashboard" class="hidden">
+      <!-- Profile -->
+      <div class="profile">
+        <h2 id="studentName">Student Name</h2>
+        <div class="meta">Class: <span id="studentClass">--</span></div>
+        <div class="meta">Email: <span id="studentEmailShow">--</span></div>
+        <button class="btn ghost" onclick="logout()">Logout</button>
+      </div>
 
-    <!-- Attendance Graph -->
-    <div class="section">
-      <h3>Attendance This Month</h3>
-      <canvas id="attendanceChart"></canvas>
-    </div>
+      <!-- KPIs -->
+      <div class="analytics">
+        <div class="kpi"><div class="icon green">✔</div><div><div class="meta">Total Present</div><div id="kpiPresent" class="val">0</div></div></div>
+        <div class="kpi"><div class="icon red">✖</div><div><div class="meta">Total Absent</div><div id="kpiAbsent" class="val">0</div></div></div>
+        <div class="kpi"><div class="icon blue">%</div><div><div class="meta">Attendance %</div><div id="kpiPercent" class="val">0%</div></div></div>
+      </div>
 
-    <!-- Homework Section -->
-    <div class="section">
-      <h3>Latest Homework</h3>
-      <div class="homework-list" id="homeworkList"></div>
+      <!-- Attendance Graph -->
+      <div class="section">
+        <h3>Attendance This Month</h3>
+        <canvas id="attendanceChart"></canvas>
+      </div>
+
+      <!-- Homework Section -->
+      <div class="section">
+        <h3>Latest Homework</h3>
+        <div class="homework-list" id="homeworkList"></div>
+      </div>
     </div>
   </div>
-
+</body>
   <div class="footer-space"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-function logout(){
-  firebase.auth().signOut();
-}
-</script>
 
 <script>
   // Firebase Config (replace with your keys)
@@ -148,35 +156,48 @@ function logout(){
   let currentStudent = null;
 
   async function studentLogin() {
-    const email = document.getElementById('studentEmail').value;
-    const password = document.getElementById('studentPassword').value;
-    document.getElementById('loginError').textContent = '';
+  const email = document.getElementById('studentEmail').value;
+  const password = document.getElementById('studentPassword').value;
+  document.getElementById('loginError').textContent = '';
 
-    try {
-      const userCredential = await auth.signInWithEmailAndPassword(email, password);
-      currentStudent = userCredential.user;
+  try {
+    const userCredential = await auth.signInWithEmailAndPassword(email, password);
+    currentStudent = userCredential.user;
 
-      // Fetch user details from users/
-      const snap = await db.ref(`users/${currentStudent.uid}`).once('value');
-      const userData = snap.val();
+    // Fetch user details from users/
+    const snap = await db.ref(`users/${currentStudent.uid}`).once('value');
+    const userData = snap.val();
 
-      if (!userData || userData.role !== "student") {
-        document.getElementById('loginError').textContent = "Not a student account!";
-        return;
-      }
-
-      document.getElementById('studentName').textContent = userData.name;
-      document.getElementById('loginPanel').classList.add('hidden');
-      document.getElementById('dashboard').classList.remove('hidden');
-
-      // Load attendance and homework
-      loadAttendance(userData.class, currentStudent.uid);
-      loadHomework(userData.class);
-
-    } catch (err) {
-      document.getElementById('loginError').textContent = err.message;
+    if (!userData || userData.role !== "student") {
+      document.getElementById('loginError').textContent = "Not a student account!";
+      return;
     }
+
+    // Show data
+    document.getElementById('studentName').textContent = userData.name;
+    document.getElementById('studentClass').textContent = userData.class;
+    document.getElementById('studentEmailShow').textContent = userData.email;
+
+    // Hide login, show dashboard
+    document.getElementById('loginPanel').style.display = "none";
+    document.getElementById('dashboard').style.display = "block";
+
+    // Load attendance and homework
+    loadAttendance(userData.class, currentStudent.uid);
+    loadHomework(userData.class);
+
+  } catch (err) {
+    document.getElementById('loginError').textContent = err.message;
   }
+}
+
+function logout() {
+  auth.signOut().then(() => {
+    document.getElementById('dashboard').style.display = "none";
+    document.getElementById('loginPanel').style.display = "block";
+  });
+}
+
 
   // Load Attendance for student
   async function loadAttendance(className, studentUID) {
