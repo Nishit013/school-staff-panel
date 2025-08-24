@@ -446,37 +446,46 @@
 
 
     // Example function to add student
-function addStudent(studentEmail, studentPassword, studentName, classId) {
-  // 1. Create student in Firebase Authentication
-  firebase.auth().createUserWithEmailAndPassword(studentEmail, studentPassword)
-    .then((userCredential) => {
-      const uid = userCredential.user.uid;
+function addStudent() {
+  const name = document.getElementById('newStudentName').value.trim();
+  const s = document.getElementById('addStudentStatus');
 
-      // 2. Add student to "users" node
-      firebase.database().ref('users/' + uid).set({
-        name: studentName,
-        email: studentEmail,
-        role: "student",
-        classId: classId
-      });
+  if (!assignedClass) {
+    s.style.color = 'var(--danger)';
+    s.textContent = 'Please select a class first.';
+    return;
+  }
+  if (!name) {
+    s.style.color = 'var(--danger)';
+    s.textContent = 'Enter a valid student name.';
+    return;
+  }
 
-      // 3. Add student under class
-      firebase.database().ref(`classes/${classId}/students/${uid}`).set({
-        name: studentName,
-        email: studentEmail
-      });
+  // Create unique ID
+  const newId = db.ref(`classes/${assignedClass}/students`).push().key;
 
-      // 4. Optionally initialize attendance
-      // (Empty, to be filled later by teacher)
-      firebase.database().ref(`attendance/${classId}`).once("value")
-        .then(() => {
-          console.log("Student added, account created, and mapped to class.");
-        });
+  // Store as an object instead of just string
+  const studentData = {
+    name: name,
+    createdAt: Date.now(),
+    totalPresent: 0,
+    totalAbsent: 0
+  };
+
+  db.ref(`classes/${assignedClass}/students/${newId}`).set(studentData)
+    .then(() => {
+      s.style.color = 'var(--success)';
+      s.textContent = `Added ${name} ✅`;
+      document.getElementById('newStudentName').value = "";
+      loadStudents(assignedClass); // refresh list
+      refreshAnalytics();
     })
-    .catch((error) => {
-      console.error("Error adding student: ", error.message);
+    .catch(err => {
+      s.style.color = 'var(--danger)';
+      s.textContent = 'Error: ' + err.message;
     });
 }
+
 
 
 
