@@ -263,24 +263,21 @@
   }
 
   // Load Homework
-  function loadHomework(className) {
-  db.ref(`homework/${className}`).on('value', (snap) => {
-    const data = snap.val() || {};
-    const tbody = document.querySelector('#homeworkTable tbody');
-    tbody.innerHTML = '';
+  // Example: Fetch homework for class 7A
+const className = "7A";
 
-    const sortedDates = Object.keys(data).sort((a,b)=> new Date(b) - new Date(a));
-    sortedDates.forEach(date => {
-      const hw = data[date];
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${date}</td>
-        <td>${hw}</td>
-      `;
-      tbody.appendChild(tr);
-    });
-  });
-}
+db.ref("homework/" + className).once("value")
+  .then(snapshot => {
+    if(snapshot.exists()) {
+      const data = snapshot.val();
+      Object.keys(data).forEach(date => {
+        console.log("Date:", date, "Homework:", data[date]);
+      });
+    } else {
+      console.log("No homework found for", className);
+    }
+  })
+  .catch(err => console.error(err));
 
 </script>
 
