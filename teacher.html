@@ -445,53 +445,39 @@
 
 
 
-    async function addStudent() {
-  const name = document.getElementById('newStudentName').value.trim();
-  const email = document.getElementById('newStudentEmail').value.trim();
-  const password = document.getElementById('newStudentPassword').value.trim();
-  const s = document.getElementById('addStudentStatus');
+    // Example function to add student
+function addStudent(studentEmail, studentPassword, studentName, classId) {
+  // 1. Create student in Firebase Authentication
+  firebase.auth().createUserWithEmailAndPassword(studentEmail, studentPassword)
+    .then((userCredential) => {
+      const uid = userCredential.user.uid;
 
-  if (!assignedClass) {
-    s.style.color = 'var(--danger)';
-    s.textContent = 'Please select a class first.';
-    return;
-  }
-  if (!name || !email || !password) {
-    s.style.color = 'var(--danger)';
-    s.textContent = 'Enter name, email, and password.';
-    return;
-  }
+      // 2. Add student to "users" node
+      firebase.database().ref('users/' + uid).set({
+        name: studentName,
+        email: studentEmail,
+        role: "student",
+        classId: classId
+      });
 
-  try {
-    // 1. Create student in Firebase Auth
-    const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
-    const uid = userCredential.user.uid;
+      // 3. Add student under class
+      firebase.database().ref(`classes/${classId}/students/${uid}`).set({
+        name: studentName,
+        email: studentEmail
+      });
 
-    // 2. Save student in users section
-    await db.ref(`users/${uid}`).set({
-      name: name,
-      email: email,
-      role: "student",
-      class: assignedClass
+      // 4. Optionally initialize attendance
+      // (Empty, to be filled later by teacher)
+      firebase.database().ref(`attendance/${classId}`).once("value")
+        .then(() => {
+          console.log("Student added, account created, and mapped to class.");
+        });
+    })
+    .catch((error) => {
+      console.error("Error adding student: ", error.message);
     });
-
-    // 3. Save student inside class
-    await db.ref(`classes/${assignedClass}/students/${uid}`).set(name);
-
-    s.style.color = 'var(--success)';
-    s.textContent = `Added ${name} ✅`;
-    document.getElementById('newStudentName').value = "";
-    document.getElementById('newStudentEmail').value = "";
-    document.getElementById('newStudentPassword').value = "";
-
-    loadStudents(assignedClass); // refresh list
-    refreshAnalytics();
-
-  } catch (err) {
-    s.style.color = 'var(--danger)';
-    s.textContent = 'Error: ' + err.message;
-  }
 }
+
 
 
 
