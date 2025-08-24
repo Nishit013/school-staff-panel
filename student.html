@@ -165,14 +165,15 @@
 
   // 3. Add your login handler here (signInWithEmailAndPassword)
   async function loginStudent() {
-    const email = document.getElementById("loginEmail").value;
-    const password = document.getElementById("loginPassword").value;
-    try {
-      await auth.signInWithEmailAndPassword(email, password);
-    } catch (error) {
-      alert("Login Failed: " + error.message);
-    }
+  const email = document.getElementById("studentEmail").value;
+  const password = document.getElementById("studentPassword").value;
+  try {
+    await auth.signInWithEmailAndPassword(email, password);
+  } catch (error) {
+    alert("Login Failed: " + error.message);
   }
+}
+
 
   // 4. 🔑 Your given code → Listen for auth state changes
   auth.onAuthStateChanged(async (user) => {
