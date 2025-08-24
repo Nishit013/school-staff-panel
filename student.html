@@ -1,58 +1,134 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Student Panel</title>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<meta charset="UTF-8" />
+<title>Student Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 <style>
-  body { font-family: sans-serif; background:#f0f2f5; margin:0; padding:0; }
-  .container { width:90%; max-width:900px; margin:20px auto; }
-  #loginPanel, #dashboard { background:white; padding:20px; border-radius:10px; box-shadow:0 2px 10px rgba(0,0,0,0.1); }
-  .hidden { display:none; }
-  table { width:100%; border-collapse:collapse; margin-top:20px; }
-  table, th, td { border:1px solid #ddd; }
-  th, td { padding:8px; text-align:left; }
+  :root{
+    --bg:#0f1220; --surface:#151a2e; --surface-2:#1b2240; --text:#e9eefb; --muted:#a6b0cf;
+    --primary:#00bcd4; --primary-2:#0097a7; --success:#21c064; --danger:#ff4f4f; --warn:#f0c419;
+    --card:#151a2e; --border:#253058; --shadow:0 10px 30px rgba(0,0,0,.35);
+  }
+  [data-theme="light"]{
+    --bg:#f6f8ff; --surface:#ffffff; --surface-2:#f3f6ff; --text:#0b1635; --muted:#47517a;
+    --primary:#007c8a; --primary-2:#00a1b3; --success:#1e9c54; --danger:#e03b3b; --warn:#cc9c10;
+    --card:#ffffff; --border:#e3e8ff; --shadow:0 8px 24px rgba(10,42,120,.08);
+  }
+
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+    background:var(--bg); color:var(--text);
+  }
+
+  /* Navbar */
+  .nav{
+    position:sticky; top:0; z-index:50;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:12px 16px; background:var(--surface); border-bottom:1px solid var(--border);
+  }
+  .brand{display:flex; align-items:center; gap:10px; font-weight:700}
+  .brand .logo{
+    width:32px; height:32px; display:grid; place-items:center; border-radius:10px;
+    background:linear-gradient(135deg,var(--primary),var(--primary-2)); color:white;
+    box-shadow:0 6px 16px rgba(0, 188, 212, .25);
+  }
+
+  /* Layout */
+  .wrap{padding:14px; max-width:1100px; margin:0 auto}
+
+  /* Student info card */
+  .profile{
+    background:var(--card); border:1px solid var(--border); border-radius:14px;
+    padding:16px; margin-top:14px; box-shadow:var(--shadow);
+  }
+  .profile h2{margin:0 0 6px; font-size:20px}
+  .profile .meta{color:var(--muted); font-size:14px}
+
+  /* Analytics header */
+  .analytics{
+    display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px;
+  }
+  .kpi{
+    background:var(--card); border:1px solid var(--border); border-radius:14px; padding:14px;
+    display:flex; align-items:center; gap:12px; box-shadow:var(--shadow);
+  }
+  .kpi .icon{width:40px; height:40px; border-radius:10px; display:grid; place-items:center}
+  .kpi .meta{line-height:1.2}
+  .kpi .val{font-size:20px; font-weight:700}
+  .icon.green{background:#163222; color:#7ff0a8}
+  .icon.red{background:#3b1a1a; color:#ff8a8a}
+  .icon.blue{background:#0f2730; color:#8de9f6}
+
+  /* Section */
+  .section{
+    margin-top:14px; background:var(--card); border:1px solid var(--border); border-radius:14px; padding:12px;
+  }
+  .section h3{margin:0 0 10px 0; font-size:18px}
+
+  /* Homework list */
+  .homework-list{display:grid; gap:10px}
+  .homework{
+    border:1px solid var(--border); border-radius:12px; padding:12px; background:var(--surface-2);
+  }
+  .homework .title{font-weight:600}
+  .homework .date{font-size:12px; color:var(--muted); margin-top:4px}
+
+  /* Graph */
+  #attendanceChart{width:100%; height:300px; background:var(--surface-2); border-radius:12px; margin-top:10px}
+
+  @media (min-width:680px){
+    .analytics{grid-template-columns:repeat(3,1fr)}
+  }
 </style>
 </head>
 <body>
-
-<div class="container">
-
-  <!-- Login Panel -->
-  <div id="loginPanel">
-    <h2>Student Login</h2>
-    <input type="email" id="studentEmail" placeholder="Email" /><br><br>
-    <input type="password" id="studentPassword" placeholder="Password" /><br><br>
-    <button onclick="studentLogin()">Login</button>
-    <p id="loginError" style="color:red;"></p>
+  <div class="nav">
+    <div class="brand"><div class="logo">🎓</div> Student Panel</div>
+    <div class="nav-actions">
+      <button class="btn ghost" onclick="logout()">Logout</button>
+    </div>
   </div>
 
-  <!-- Student Dashboard -->
-  <div id="dashboard" class="hidden">
-    <h2>Welcome, <span id="studentName"></span></h2>
+  <div class="wrap">
+    <!-- Profile -->
+    <div class="profile">
+      <h2 id="studentName">Student Name</h2>
+      <div class="meta">Class: <span id="studentClass">--</span></div>
+      <div class="meta">Email: <span id="studentEmail">--</span></div>
+    </div>
 
-    <!-- Attendance Summary -->
-    <h3>Attendance Summary</h3>
-    <p>Total Days: <span id="totalDays"></span>, Present: <span id="daysPresent"></span>, Absent: <span id="daysAbsent"></span></p>
-    <canvas id="attendanceChart" width="400" height="150"></canvas>
+    <!-- KPIs -->
+    <div class="analytics">
+      <div class="kpi"><div class="icon green">✔</div><div><div class="meta">Total Present</div><div id="kpiPresent" class="val">0</div></div></div>
+      <div class="kpi"><div class="icon red">✖</div><div><div class="meta">Total Absent</div><div id="kpiAbsent" class="val">0</div></div></div>
+      <div class="kpi"><div class="icon blue">%</div><div><div class="meta">Attendance %</div><div id="kpiPercent" class="val">0%</div></div></div>
+    </div>
 
-    <!-- Homework List -->
-    <h3>Homework</h3>
-    <table id="homeworkTable">
-      <thead>
-        <tr>
-          <th>Date</th>
-          <th>Homework</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
+    <!-- Attendance Graph -->
+    <div class="section">
+      <h3>Attendance This Month</h3>
+      <canvas id="attendanceChart"></canvas>
+    </div>
+
+    <!-- Homework Section -->
+    <div class="section">
+      <h3>Latest Homework</h3>
+      <div class="homework-list" id="homeworkList"></div>
+    </div>
   </div>
 
-</div>
+  <div class="footer-space"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+function logout(){
+  firebase.auth().signOut();
+}
+</script>
 
 <script>
   // Firebase Config (replace with your keys)
