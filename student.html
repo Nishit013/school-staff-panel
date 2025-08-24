@@ -104,7 +104,8 @@
     </div>
 
     <!-- DASHBOARD (hidden until login) -->
-    <div id="dashboard" class="hidden">
+    <div id="dashboard" style="display:none;">
+
       <!-- Profile -->
       <div class="profile">
         <h2 id="studentName">Student Name</h2>
@@ -139,61 +140,68 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-  
-  <script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+<script>
+  // 1. Firebase config
   const firebaseConfig = {
-    apiKey: "AIzaSyCfffexgO1rf6m6EteNNtFb_kZnRqqTUBM",
-      authDomain: "schoolmanagementsystem-32895.firebaseapp.com",
-      databaseURL: "https://schoolmanagementsystem-32895-default-rtdb.firebaseio.com",
-      projectId: "schoolmanagementsystem-32895",
-      storageBucket: "schoolmanagementsystem-32895.appspot.com",
-      messagingSenderId: "837516759841",
-      appId: "1:837516759841:web:31d6666b15037082fa6460"
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_AUTH_DOMAIN",
+    databaseURL: "YOUR_DB_URL",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_BUCKET",
+    messagingSenderId: "YOUR_SENDER_ID",
+    appId: "YOUR_APP_ID"
   };
+
+  // 2. Initialize Firebase
   firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
   const auth = firebase.auth();
+  const db = firebase.database();
 
   let currentStudent = null;
 
-  async function studentLogin() {
-  const email = document.getElementById('studentEmail').value;
-  const password = document.getElementById('studentPassword').value;
-  document.getElementById('loginError').textContent = '';
-
-  try {
-    const userCredential = await auth.signInWithEmailAndPassword(email, password);
-    currentStudent = userCredential.user;
-
-    // Fetch user details from users/
-    const snap = await db.ref(`users/${currentStudent.uid}`).once('value');
-    const userData = snap.val();
-
-    if (!userData || userData.role !== "student") {
-      document.getElementById('loginError').textContent = "Not a student account!";
-      return;
+  // 3. Add your login handler here (signInWithEmailAndPassword)
+  async function loginStudent() {
+    const email = document.getElementById("loginEmail").value;
+    const password = document.getElementById("loginPassword").value;
+    try {
+      await auth.signInWithEmailAndPassword(email, password);
+    } catch (error) {
+      alert("Login Failed: " + error.message);
     }
-
-    // Show data
-    document.getElementById('studentName').textContent = userData.name;
-    document.getElementById('studentClass').textContent = userData.class;
-    document.getElementById('studentEmailShow').textContent = userData.email;
-
-    // Hide login, show dashboard
-    document.getElementById('loginPanel').style.display = "none";
-    document.getElementById('dashboard').style.display = "block";
-
-    // Load attendance and homework
-    loadAttendance(userData.class, currentStudent.uid);
-    loadHomework(userData.class);
-
-  } catch (err) {
-    document.getElementById('loginError').textContent = err.message;
   }
-}
+
+  // 4. 🔑 Your given code → Listen for auth state changes
+  auth.onAuthStateChanged(async (user) => {
+    if (user) {
+      currentStudent = user;
+      const snap = await db.ref(`users/${user.uid}`).once('value');
+      const userData = snap.val();
+
+      if (userData && userData.role === "student") {
+        document.getElementById('studentName').textContent = userData.name;
+        document.getElementById('studentClass').textContent = userData.class;
+        document.getElementById('studentEmailShow').textContent = userData.email;
+
+        // ✅ Show dashboard, hide login
+        document.getElementById('loginPanel').style.display = "none";
+        document.getElementById('dashboard').style.display = "block";
+
+        // Load attendance & homework
+        loadAttendance(userData.class, user.uid);
+        loadHomework(userData.class);
+      }
+    } else {
+      // ❌ No user logged in → show login
+      document.getElementById('loginPanel').style.display = "block";
+      document.getElementById('dashboard').style.display = "none";
+    }
+  });
+
+
 
 function logout() {
   auth.signOut().then(() => {
