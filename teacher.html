@@ -234,16 +234,17 @@
     </div>
 
     <!-- Homework (kept simple) -->
-    <div class="section">
-      <h3>✏️ Upload Homework</h3>
-      <div class="row">
-        <textarea id="homeworkText" rows="3" style="width:100%;border:1px solid var(--border);background:var(--surface-2);color:var(--text);border-radius:12px;padding:10px" placeholder="Write homework here…"></textarea>
-      </div>
-      <div class="row" style="justify-content:flex-end">
-        <button class="btn primary" onclick="uploadHomework()">Upload</button>
-      </div>
-      <div id="homeworkStatus" style="margin-top:6px;color:var(--muted);font-size:13px"></div>
-    </div>
+    <div id="homeworkPanel" class="panel">
+  <h3>📚 Add Homework</h3>
+  <div class="select">
+    <label>Select Class:</label>
+    <select id="classSelectForHomework" onchange="loadSubjectsForHomework(this.value)">
+      <option value="">Select Class</option>
+    </select>
+  </div>
+  <div id="subjectHomeworkContainer"></div>
+</div>
+
 
     <div class="footer-space"></div>
   </div>
@@ -725,15 +726,35 @@ function updateConfirmAllButton() {
       });
     }
 
-    function uploadHomework(){
-      const hw = document.getElementById('homeworkText').value.trim();
-      const s = document.getElementById('homeworkStatus');
-      if(!hw){ s.style.color='var(--danger)'; s.textContent='Please enter homework.'; return; }
-      const d = selectedDate();
-      db.ref(`homework/${assignedClass}/${d}`).set(hw).then(()=>{
-        s.style.color='var(--success)'; s.textContent='Homework uploaded.'; document.getElementById('homeworkText').value="";
-      });
-    }
+    async function loadSubjectsForHomework(classId) {
+  const container = document.getElementById("subjectHomeworkContainer");
+  if (!classId) return container.innerHTML = "<p>Select a class first.</p>";
+
+  const snap = await db.ref(`classes/${classId}/subjects`).once("value");
+  const subjects = snap.val() || {};
+  if (!Object.keys(subjects).length) {
+    return container.innerHTML = "<p>No subjects added yet.</p>";
+  }
+
+  let html = "";
+  Object.keys(subjects).forEach(sub => {
+    html += `
+      <div class="subject-homework">
+        <h4>${sub}</h4>
+        <textarea id="hw_${sub}" placeholder="Enter ${sub} homework..."></textarea>
+        <button onclick="submitHomework('${classId}','${sub}')">📤 Submit</button>
+      </div>`;
+  });
+  container.innerHTML = html;
+}
+
+async function submitHomework(classId, subject) {
+  const text = document.getElementById(`hw_${subject}`).value.trim();
+  if (!text) return alert(`Enter homework for ${subject}`);
+  const date = new Date().toISOString().split('T')[0];
+  await db.ref(`homework/${classId}/${date}/${subject}`).set(text);
+  alert(`Homework for ${subject} uploaded successfully!`);
+}
 
     function deleteStudent(studentId, studentName){
       if(!confirm(`Remove ${studentName}?`)) return;
