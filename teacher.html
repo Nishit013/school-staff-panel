@@ -351,7 +351,8 @@
     }
 
     // ==== Load students + build cards ====
-    async function loadStudents(classId) {
+    async function loadStudents(classId) 
+    {
   const container = document.getElementById('studentContainer');
   container.innerHTML = "Loading…";
   studentCards = [];
@@ -374,28 +375,28 @@
 
   // Cache all attendance once instead of fetching for every student
   const allDaysSnap = await db.ref(`attendance/${classId}`).once("value");
-  const allDays = allDaysSnap.val() || {};
+const allDays = allDaysSnap.val() || {};
 
-  container.innerHTML = "";
-  for (const [id, name] of Object.entries(students)) {
-  // Totals over all time
+container.innerHTML = "";
+studentCards = []; // ✅ clear old cards
+
+for (const [id, name] of Object.entries(students)) {
   let presentCount = 0, absentCount = 0;
+
   Object.values(allDays).forEach(day => {
     if (day[id] === "Present") presentCount++;
     if (day[id] === "Absent") absentCount++;
   });
 
-  // Status for today
   let statusToday;
   if (tempAttendance[id]) {
-    statusToday = `${tempAttendance[id]} (Pending)`;  // staged immediately
+    statusToday = `${tempAttendance[id]} (Pending)`;
   } else if (attendanceToday[id]) {
-    statusToday = attendanceToday[id];               // confirmed
+    statusToday = attendanceToday[id];
   } else {
     statusToday = "Not Marked";
   }
 
-  // ✅ Create card FIRST
   const card = document.createElement('div');
   card.className = "student";
   card.setAttribute("data-id", id);
@@ -431,18 +432,18 @@
 
   // Animate bars
   setTimeout(() => {
-    const total = (presentCount + absentCount) || 1;
+    const total = presentCount + absentCount || 1;
     card.querySelector('.fill.present').style.width = `${(presentCount / total) * 100}%`;
-    card.querySelector('.fill.absent').style.width  = `${(absentCount / total) * 100}%`;
+    card.querySelector('.fill.absent').style.width = `${(absentCount / total) * 100}%`;
   }, 40);
 
   container.appendChild(card);
   studentCards.push(card);
 }
 
-  filterStudents(); // apply search filter if any
-}
+filterStudents(); // apply search filter if any
 
+    }
 
 
     // Example function to add student
