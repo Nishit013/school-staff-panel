@@ -366,6 +366,7 @@ async function loadHomeworkCalendar(classId) {
 
   let html = "<div class='calendar-grid'>";
   dates.forEach(date => {
+    // Make sure it is clickable even if value is string
     html += `<div class="calendar-day" onclick="showHomework('${classId}','${date}')">${date}</div>`;
   });
   html += "</div>";
@@ -378,18 +379,23 @@ async function showHomework(classId, date) {
   document.getElementById('modalDate').textContent = date;
 
   const snap = await db.ref(`homework/${classId}/${date}`).once('value');
-  const data = snap.val() || {};
+  const data = snap.val();
 
   let html = "<ul>";
-  Object.entries(data).forEach(([sub, hw]) => {
-    html += `<li><strong>${sub}:</strong> ${hw}</li>`;
-  });
+  if (!data) {
+    html += "<li>No homework uploaded.</li>";
+  } else if (typeof data === "string") {
+    html += `<li>${data}</li>`; // single homework text
+  } else {
+    Object.entries(data).forEach(([sub, hw]) => {
+      html += `<li><strong>${sub}:</strong> ${hw}</li>`;
+    });
+  }
   html += "</ul>";
 
   modalList.innerHTML = html;
   modal.style.display = "flex";
 }
-
 function closeHomeworkModal() {
   document.getElementById('homeworkModal').style.display = "none";
 }
