@@ -71,12 +71,20 @@ body {
 }
 
 /* Main Content */
+/* Main Content */
 .main {
   flex: 1;
   padding: 25px;
   display: flex;
-  justify-content: center;
-  align-items: flex-start;
+  justify-content: center;  /* horizontal center */
+  align-items: flex-start;  /* top align (or use center for vertical) */
+  min-height: calc(100vh - 40px); /* make sure panel has space */
+  gap: 20px; /* space between multiple panels if any */
+}
+
+/* Optional: if you want vertical centering */
+.main.center-vertical {
+  align-items: center; /* vertical center */
 }
 
 /* Panel Container */
@@ -91,7 +99,11 @@ body {
   flex-direction: column;
   gap: 30px;
   backdrop-filter: blur(var(--blur));
+
+  /* center itself if parent has extra space */
+  margin: auto;
 }
+
 
 /* Panel Title */
 .panel h3 {
