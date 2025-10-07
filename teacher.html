@@ -235,15 +235,11 @@
 
     <!-- Homework (kept simple) -->
     <div id="homeworkPanel" class="panel">
-  <h3>📚 Add Homework</h3>
-  <div class="select">
-    <label>Select Class:</label>
-    <select id="classSelectForHomework" onchange="loadSubjectsForHomework(this.value)">
-      <option value="">Select Class</option>
-    </select>
-  </div>
+  <h3> Add Homework</h3>
+  <!-- Remove class selection dropdown -->
   <div id="subjectHomeworkContainer"></div>
 </div>
+
 
 
     <div class="footer-space"></div>
@@ -727,7 +723,7 @@ function updateConfirmAllButton() {
     }
 
     // 🔹 Load all classes into homework dropdown
-// 🔹 Load subject-wise homework panel for the selected class
+// Call this whenever the assignedClass changes (after onClassSelect)
 async function loadSubjectsForHomework() {
   const container = document.getElementById("subjectHomeworkContainer");
   if (!assignedClass) return container.innerHTML = "<p>Select a class first.</p>";
@@ -750,9 +746,9 @@ async function loadSubjectsForHomework() {
     `;
   });
   container.innerHTML = html;
-};
+}
 
-// 🔹 Submit homework for a subject in the selected class
+// Submit homework for the selected class and subject
 async function submitHomework(subject) {
   if (!assignedClass) return alert("No class selected!");
   const text = document.getElementById(`hw_${subject}`).value.trim();
@@ -761,6 +757,19 @@ async function submitHomework(subject) {
   await db.ref(`homework/${assignedClass}/${date}/${subject}`).set(text);
   alert(`Homework for ${subject} uploaded successfully!`);
 }
+
+// 🔹 Update on class selection
+async function onClassSelect(classId){
+  if(!classId) return;
+  assignedClass = classId;
+  document.getElementById('className').textContent = classId;
+  tempAttendance = {};
+  await loadStudents(classId);
+  attachAttendanceListener();
+  refreshAnalytics();
+  await loadSubjectsForHomework(); // <-- load homework subjects automatically
+}
+
 
 
     function deleteStudent(studentId, studentName){
