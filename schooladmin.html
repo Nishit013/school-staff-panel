@@ -208,30 +208,35 @@ async function loadTeachers() {
   async function loadStudents() {
   const snap = await db.ref('users').once('value');
   const users = snap.val() || {};
-  
-  // Populate the list in <ul>
+
+  // Update <ul> with name + class + UID
   const ul = document.getElementById('existingStudentsList'); 
   ul.innerHTML = '';
-  
-  // Populate the dropdown
-  const select = document.getElementById('selectClassForStudent');
-  select.innerHTML = '<option value="">Select Student</option>';
 
   Object.entries(users).forEach(([uid, u]) => {
-    if(u.role === 'student') { 
-      // List in <ul>
-      const li = document.createElement('li'); 
-      li.textContent = `${u.name} (${u.class}) - [ID: ${uid}]`; 
+    if(u.role === 'student'){ 
+      const li = document.createElement('li');
+      li.textContent = `${u.name} (${u.class}) [ID: ${uid}]`; // show UID
       ul.appendChild(li);
-
-      // Add to dropdown
-      const opt = document.createElement('option');
-      opt.value = uid; // store UID as value
-      opt.textContent = `${u.name} [${uid}] (${u.class})`;
-      select.appendChild(opt);
     }
   });
+
+  // Optional: populate student dropdown with UID if you have one
+  const dropdown = document.getElementById('studentDropdown');
+  if(dropdown){
+    dropdown.innerHTML = '<option value="">Select Student</option>';
+    Object.entries(users).forEach(([uid, u]) => {
+      if(u.role === 'student'){ 
+        const opt = document.createElement('option');
+        opt.value = uid;
+        opt.textContent = `${u.name} [${uid}] (${u.class})`;
+        dropdown.appendChild(opt);
+      }
+    });
+  }
 }
+
+
 
 
   // Initial load
