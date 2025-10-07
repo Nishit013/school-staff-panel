@@ -84,12 +84,14 @@
 
   <!-- Teachers Panel -->
   <div id="panel-teachers" class="panel" style="display:none;">
-    <h3>Teacher Management</h3>
-    <input type="text" id="newTeacherName" placeholder="Name">
-    <input type="email" id="newTeacherEmail" placeholder="Email">
-    <button onclick="createTeacher()">➕ Add Teacher</button>
-    <ul id="existingTeachersList"></ul>
-  </div>
+  <h3>Teacher Management</h3>
+  <input type="text" id="newTeacherName" placeholder="Name" style="padding:8px; width:100%; margin:5px 0; border-radius:6px;">
+  <input type="email" id="newTeacherEmail" placeholder="Email" style="padding:8px; width:100%; margin:5px 0; border-radius:6px;">
+  <input type="password" id="newTeacherPassword" placeholder="Password" style="padding:8px; width:100%; margin:5px 0; border-radius:6px;">
+  <button onclick="createTeacher()" style="margin-top:5px;">➕ Add Teacher</button>
+  <ul id="existingTeachersList" style="margin-top:10px;"></ul>
+</div>
+
 
   <!-- Students Panel -->
   <div id="panel-students" class="panel" style="display:none;">
@@ -150,34 +152,30 @@
   }
 
   // Teachers
-  // Teachers
 async function createTeacher() {
   const name = document.getElementById('newTeacherName').value.trim();
   const email = document.getElementById('newTeacherEmail').value.trim();
-  const password = document.getElementById('newTeacherPassword').value.trim(); // add input field for password
-
+  const password = document.getElementById('newTeacherPassword').value.trim();
+  
   if(!name || !email || !password) return alert("Enter teacher name, email, and password");
 
   try {
-    // 1️⃣ Create Firebase Auth user
+    // 1️⃣ Create teacher in Firebase Auth
     const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
     const uid = userCredential.user.uid;
 
-    // 2️⃣ Save teacher info in database
-    await db.ref(`users/${uid}`).set({
-      name,
-      email,
-      role: 'teacher'
-    });
+    // 2️⃣ Save teacher info in your Realtime Database
+    await db.ref(`users/${uid}`).set({ name, email, role:'teacher' });
 
-    alert(`Teacher ${name} created successfully!`);
+    alert(`Teacher ${name} added successfully!`);
+    
+    // Clear input fields
     document.getElementById('newTeacherName').value = '';
     document.getElementById('newTeacherEmail').value = '';
     document.getElementById('newTeacherPassword').value = '';
 
-    loadTeachers();
-
-  } catch (err) {
+    loadTeachers(); // Refresh the teacher list
+  } catch(err) {
     alert("Error: " + err.message);
   }
 }
@@ -189,8 +187,8 @@ async function loadTeachers() {
   ul.innerHTML = '';
   Object.entries(users).forEach(([uid,u])=>{
     if(u.role==='teacher'){ 
-      const li=document.createElement('li'); 
-      li.textContent=`${u.name} (${u.email})`; 
+      const li = document.createElement('li'); 
+      li.textContent = `${u.name} (${u.email})`; 
       ul.appendChild(li); 
     }
   });
@@ -208,13 +206,33 @@ async function loadTeachers() {
     loadStudents();
   }
   async function loadStudents() {
-    const snap = await db.ref('users').once('value');
-    const users = snap.val() || {};
-    const ul = document.getElementById('existingStudentsList'); ul.innerHTML='';
-    Object.entries(users).forEach(([uid,u])=>{
-      if(u.role==='student'){ const li=document.createElement('li'); li.textContent=`${u.name} (${u.class})`; ul.appendChild(li);}
-    });
-  }
+  const snap = await db.ref('users').once('value');
+  const users = snap.val() || {};
+  
+  // Populate the list in <ul>
+  const ul = document.getElementById('existingStudentsList'); 
+  ul.innerHTML = '';
+  
+  // Populate the dropdown
+  const select = document.getElementById('selectClassForStudent');
+  select.innerHTML = '<option value="">Select Student</option>';
+
+  Object.entries(users).forEach(([uid, u]) => {
+    if(u.role === 'student') { 
+      // List in <ul>
+      const li = document.createElement('li'); 
+      li.textContent = `${u.name} (${u.class}) - [ID: ${uid}]`; 
+      ul.appendChild(li);
+
+      // Add to dropdown
+      const opt = document.createElement('option');
+      opt.value = uid; // store UID as value
+      opt.textContent = `${u.name} [${uid}] (${u.class})`;
+      select.appendChild(opt);
+    }
+  });
+}
+
 
   // Initial load
   auth.onAuthStateChanged(user=>{
