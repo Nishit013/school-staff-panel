@@ -93,16 +93,17 @@
   <div class="wrap">
 
     <!-- LOGIN PANEL -->
-    <div id="loginPanel" class="profile">
-      <h2>Student Login</h2>
-      <div>
-        <input type="email" id="studentEmail" placeholder="Email" style="padding:8px; width:100%; margin:5px 0; border-radius:8px;">
-        <input type="password" id="studentPassword" placeholder="Password" style="padding:8px; width:100%; margin:5px 0; border-radius:8px;">
-        <button class="btn primary" onclick="loginStudent()">Login</button>
+    <!-- LOGIN PANEL -->
+<div id="loginPanel" class="profile">
+  <h2>Student Login</h2>
+  <div>
+    <input type="text" id="studentID" placeholder="Enter Your Student ID" 
+           style="padding:8px; width:100%; margin:5px 0; border-radius:8px;">
+    <button class="btn primary" onclick="loginStudent()">Login</button>
+    <div id="loginError" style="color:var(--danger); margin-top:8px;"></div>
+  </div>
+</div>
 
-        <div id="loginError" style="color:var(--danger); margin-top:8px;"></div>
-      </div>
-    </div>
 
     <!-- DASHBOARD (hidden until login) -->
     <div id="dashboard" style="display:none;">
@@ -162,59 +163,54 @@
   const auth = firebase.auth();
   const db = firebase.database();
 
-  let currentStudent = null;
+ let currentStudent = null;
 
-  // 3. Add your login handler here (signInWithEmailAndPassword)
-  async function loginStudent() {
-  const email = document.getElementById("studentEmail").value;
-  const password = document.getElementById("studentPassword").value;
+async function loginStudent() {
+  const studentID = document.getElementById("studentID").value.trim();
+  if (!studentID) {
+    document.getElementById('loginError').textContent = "Enter your Student ID!";
+    return;
+  }
+
   try {
-    await auth.signInWithEmailAndPassword(email, password);
-  } catch (error) {
-    alert("Login Failed: " + error.message);
+    // Check if student exists in users node
+    const snap = await db.ref(`users/${studentID}`).once('value');
+    const userData = snap.val();
+
+    if (!userData || userData.role !== "student") {
+      document.getElementById('loginError').textContent = "Invalid Student ID!";
+      return;
+    }
+
+    // ✅ Successful login
+    currentStudent = { uid: studentID, ...userData };
+    showDashboard(currentStudent);
+
+  } catch (err) {
+    document.getElementById('loginError').textContent = "Error: " + err.message;
   }
 }
 
+function showDashboard(student) {
+  document.getElementById('loginPanel').style.display = "none";
+  document.getElementById('dashboard').style.display = "block";
 
-  // 4. 🔑 Your given code → Listen for auth state changes
-  
-  // Listen for login/logout state changes
-  auth.onAuthStateChanged(async (user) => {
-    if (user) {
-      currentStudent = user;
+  document.getElementById('studentName').textContent = student.name;
+  document.getElementById('studentClass').textContent = student.class || "--";
+  document.getElementById('studentEmailShow').textContent = student.email || "--";
 
-      // fetch student data from database
-      const snap = await db.ref(`users/${user.uid}`).once('value');
-      const userData = snap.val();
+  loadAttendance(student.class, student.uid);
+  loadHomework(student.class);
+}
 
-      if (userData && userData.role === "student") {
-        // show student info
-        document.getElementById('studentName').textContent = userData.name;
-        document.getElementById('studentClass').textContent = userData.class;
-        document.getElementById('studentEmailShow').textContent = userData.email;
+// Logout function
+function logout() {
+  currentStudent = null;
+  document.getElementById('loginPanel').style.display = "block";
+  document.getElementById('dashboard').style.display = "none";
+  document.getElementById('studentID').value = "";
+}
 
-        // hide login, show dashboard
-        document.getElementById('loginPanel').style.display = "none";
-        document.getElementById('dashboard').style.display = "block";
-
-        // load attendance + homework
-        loadAttendance(userData.class, user.uid);
-        loadHomework(userData.class);
-      } else {
-        document.getElementById('loginError').textContent = "Not a student account!";
-        await auth.signOut();
-      }
-    } else {
-      // no one logged in → show login page
-      document.getElementById('loginPanel').style.display = "block";
-      document.getElementById('dashboard').style.display = "none";
-    }
-  });
-
-  // Logout function
-  function logout() {
-    auth.signOut();
-  }
 
 
 
