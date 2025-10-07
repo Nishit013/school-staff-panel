@@ -86,50 +86,66 @@
 
 
 
- .calendar-grid {
+ #calendarContainer {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 10px;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 5px;
+  margin-top: 10px;
 }
+
 .calendar-day {
   padding: 10px;
-  background: #f0f0f0;
-  border-radius: 6px;
+  border-radius: 8px;
   text-align: center;
   cursor: pointer;
-  transition: 0.2s;
+  background-color: #1f1f1f; /* dark bg for better contrast */
+  color: #fff;
+  font-weight: bold;
+  border: 1px solid #333;
 }
+
+.calendar-day.today {
+  border: 2px solid #00ff99;
+}
+
+.calendar-day.hasHomework {
+  background-color: #3a86ff;
+  color: #fff;
+}
+
 .calendar-day:hover {
-  background: #cfd8ff;
+  background-color: #ffbe0b;
+  color: #000;
 }
 
 .modal {
   position: fixed;
   top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background: rgba(0,0,0,0.5);
+  left:0;
+  width:100%;
+  height:100%;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  background: rgba(0,0,0,0.7);
+  z-index: 1000;
 }
+
 .modal-content {
-  background: white;
-  padding: 20px;
-  border-radius: 8px;
-  width: 350px;
-  max-height: 80%;
-  overflow-y: auto;
-  position: relative;
+  background:#1f1f1f;
+  color:#fff;
+  padding:20px;
+  border-radius:10px;
+  max-width:400px;
+  width:90%;
 }
+
 .modal-content .close {
-  position: absolute;
-  right: 10px;
-  top: 10px;
-  font-size: 20px;
-  cursor: pointer;
+  float:right;
+  cursor:pointer;
+  font-size:20px;
 }
+
 
 </style>
 </head>
@@ -182,18 +198,19 @@
 
       <!-- Homework Section -->
       <div id="homeworkPanelStudent">
-        <h3>📅 Homework Calendar</h3>
-        <div id="calendarContainer"></div>
-      </div>
+  <h3>📅 Homework Calendar</h3>
+  <div id="calendarContainer"></div>
+</div>
 
-      <!-- Homework Modal -->
-      <div id="homeworkModal" class="modal" style="display:none;">
-        <div class="modal-content">
-          <span class="close" onclick="closeHomeworkModal()">&times;</span>
-          <h4 id="modalDate">Date</h4>
-          <div id="modalHomeworkList"></div>
-        </div>
-      </div>
+<!-- Homework Modal -->
+<div id="homeworkModal" class="modal" style="display:none;">
+  <div class="modal-content">
+    <span class="close" onclick="closeHomeworkModal()">&times;</span>
+    <h4 id="modalDate">Date</h4>
+    <div id="modalHomeworkList"></div>
+  </div>
+</div>
+
     </div>
 
   </div>
@@ -316,23 +333,36 @@
 
   // ===== LOAD HOMEWORK CALENDAR =====
   async function loadHomeworkCalendar(classId) {
-    const cal = document.getElementById('calendarContainer');
-    const snap = await db.ref(`homework/${classId}`).once('value');
-    const allHW = snap.val() || {};
+  const cal = document.getElementById('calendarContainer');
+  cal.innerHTML = "";
 
-    const dates = Object.keys(allHW).sort().reverse();
-    if (!dates.length) {
-      cal.innerHTML = "<p>No homework uploaded yet.</p>";
-      return;
-    }
+  const snap = await db.ref(`homework/${classId}`).once('value');
+  const allHW = snap.val() || {};
 
-    let html = "<div class='calendar-grid'>";
-    dates.forEach(date => {
-      html += `<div class="calendar-day" onclick="showHomework('${classId}','${date}')">${date}</div>`;
-    });
-    html += "</div>";
-    cal.innerHTML = html;
+  const today = new Date();
+  const month = today.getMonth(); // 0-11
+  const year = today.getFullYear();
+
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
+  const totalDays = lastDay.getDate();
+
+  let html = "";
+
+  for (let d = 1; d <= totalDays; d++) {
+    const dateObj = new Date(year, month, d);
+    const dateStr = dateObj.toISOString().split('T')[0]; // YYYY-MM-DD
+
+    let classes = "calendar-day";
+    if (dateStr === today.toISOString().split('T')[0]) classes += " today";
+    if (allHW[dateStr]) classes += " hasHomework";
+
+    html += `<div class="${classes}" onclick="showHomework('${classId}','${dateStr}')">${d}</div>`;
   }
+
+  cal.innerHTML = html;
+}
+
 
   // ===== SHOW HOMEWORK MODAL =====
   async function showHomework(classId, date) {
