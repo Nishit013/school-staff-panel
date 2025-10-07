@@ -727,32 +727,41 @@ function updateConfirmAllButton() {
     }
 
     // 🔹 Load all classes into homework dropdown
-async function loadClassesForHomework() {
-  const classSelect = document.getElementById("classSelectForHomework");
-  classSelect.innerHTML = '<option value="">Select Class</option>';
+// 🔹 Load subject-wise homework panel for the selected class
+async function loadSubjectsForHomework() {
+  const container = document.getElementById("subjectHomeworkContainer");
+  if (!assignedClass) return container.innerHTML = "<p>Select a class first.</p>";
 
-  const snap = await db.ref("classes").once("value");
-  const classes = snap.val() || {};
+  const snap = await db.ref(`classes/${assignedClass}/subjects`).once("value");
+  const subjects = snap.val() || {};
 
-  Object.keys(classes).forEach(cls => {
-    const opt = document.createElement("option");
-    opt.value = cls;
-    opt.textContent = cls;
-    classSelect.appendChild(opt);
+  if (!Object.keys(subjects).length) {
+    return container.innerHTML = "<p>No subjects added yet.</p>";
+  }
+
+  let html = "";
+  Object.keys(subjects).forEach(sub => {
+    html += `
+      <div class="subject-homework">
+        <h4>${sub}</h4>
+        <textarea id="hw_${sub}" placeholder="Enter ${sub} homework..."></textarea>
+        <button onclick="submitHomework('${sub}')">📤 Submit</button>
+      </div>
+    `;
   });
-}
+  container.innerHTML = html;
+};
 
-// 🔹 Call this after teacher login or when showing Homework panel
-loadClassesForHomework();
-
-
-async function submitHomework(classId, subject) {
+// 🔹 Submit homework for a subject in the selected class
+async function submitHomework(subject) {
+  if (!assignedClass) return alert("No class selected!");
   const text = document.getElementById(`hw_${subject}`).value.trim();
   if (!text) return alert(`Enter homework for ${subject}`);
   const date = new Date().toISOString().split('T')[0];
-  await db.ref(`homework/${classId}/${date}/${subject}`).set(text);
+  await db.ref(`homework/${assignedClass}/${date}/${subject}`).set(text);
   alert(`Homework for ${subject} uploaded successfully!`);
 }
+
 
     function deleteStudent(studentId, studentName){
       if(!confirm(`Remove ${studentName}?`)) return;
