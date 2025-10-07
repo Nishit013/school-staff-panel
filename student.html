@@ -229,6 +229,42 @@
 }
 
 
+
+
+.student-card .message-btn {
+  float: right;
+  background: #00bcd4;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 5px 8px;
+  cursor: pointer;
+}
+
+.modal {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  background: #fff;
+  padding: 20px;
+  border-radius: 10px;
+  width: 400px;
+}
+
+.modal-content .close {
+  float: right;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+
 </style>
 </head>
 <body>
@@ -298,6 +334,17 @@
     </div>
 
   </div>
+<!-- Student Message Modal -->
+<div id="studentMessageModal" class="modal" style="display:none;">
+  <div class="modal-content">
+    <span class="close" onclick="closeStudentMessageModal()">&times;</span>
+    <h3>Messages with <span id="messageStudentName"></span></h3>
+    <div id="studentMessagesContainer" style="height:250px; overflow-y:auto; border:1px solid #ccc; padding:8px; margin-bottom:10px; border-radius:8px; background:#f0f0f0;"></div>
+    <textarea id="studentMessageInput" placeholder="Type your message..." style="width:100%; height:50px; margin-bottom:5px; padding:6px; border-radius:6px;"></textarea>
+    <button onclick="sendMessageToTeacher()" style="padding:6px 12px; border-radius:6px; background:#00bcd4; color:#fff; border:none; cursor:pointer;">Send</button>
+  </div>
+</div>
+
 
   <div class="footer-space"></div>
 
@@ -474,7 +521,94 @@ function closeHomeworkModal() {
   modal.classList.remove('show');
 }
 
+let currentStudentUid = null; // Will be set after login
+let studentMessageListener = null; // For real-time updates
 
+// Load student card for dashboard (optional)
+async function loadStudentPanel() {
+  const container = document.getElementById('studentContainer');
+  container.innerHTML = "Loading…";
+
+  const studentSnap = await db.ref(`users/${currentStudentUid}`).once("value");
+  const studentData = studentSnap.val();
+
+  container.innerHTML = `
+    <div class="student-card" style="border:1px solid var(--border); padding:10px; border-radius:12px; margin-bottom:8px; background:var(--card)">
+      <div class="row" style="display:flex; justify-content:space-between; align-items:center;">
+        <div class="name">${studentData.name}</div>
+        <button class="message-btn" onclick="openStudentMessageModal('${currentStudentUid}', '${studentData.name}')">💬 Messages</button>
+      </div>
+    </div>
+  `;
+}
+
+// Open modal to see messages from teachers
+function openStudentMessageModal(studentId, studentName) {
+  document.getElementById('studentMessageModal').style.display = 'flex';
+  document.getElementById('messageStudentName').textContent = studentName;
+  currentStudentUid = studentId;
+
+  const container = document.getElementById('studentMessagesContainer');
+  container.innerHTML = '';
+
+  // Remove old listener if exists
+  if(studentMessageListener) db.ref(`messages/${studentId}`).off('value', studentMessageListener);
+
+  // Real-time listener
+  studentMessageListener = db.ref(`messages/${studentId}`).on('value', snap => {
+    const messages = snap.val() || {};
+    container.innerHTML = '';
+
+    Object.values(messages).forEach(msg => {
+      const bubble = document.createElement('div');
+      bubble.style.marginBottom = '6px';
+      bubble.style.padding = '6px 10px';
+      bubble.style.borderRadius = '10px';
+      bubble.style.maxWidth = '80%';
+      bubble.style.wordBreak = 'break-word';
+      bubble.style.background = msg.senderRole === 'teacher' ? '#00bcd4' : '#e0e0e0';
+      bubble.style.color = msg.senderRole === 'teacher' ? '#fff' : '#000';
+      bubble.style.alignSelf = msg.senderRole === 'teacher' ? 'flex-end' : 'flex-start';
+      bubble.innerHTML = `<strong>${msg.senderName}:</strong> ${msg.text}<br><small style="font-size:10px; opacity:0.7;">${new Date(msg.timestamp).toLocaleString()}</small>`;
+      container.appendChild(bubble);
+    });
+
+    container.scrollTop = container.scrollHeight;
+  });
+}
+
+// Close modal
+function closeStudentMessageModal() {
+  document.getElementById('studentMessageModal').style.display = 'none';
+  const container = document.getElementById('studentMessagesContainer');
+  container.innerHTML = '';
+  document.getElementById('studentMessageInput').value = '';
+  if(studentMessageListener && currentStudentUid) {
+    db.ref(`messages/${currentStudentUid}`).off('value', studentMessageListener);
+  }
+}
+
+// Send message from student to teacher
+async function sendMessageToTeacher() {
+  const text = document.getElementById('studentMessageInput').value.trim();
+  if(!text) return alert("Enter a message");
+
+  if(!currentStudentUid) return alert("Student ID missing!");
+
+  const studentSnap = await db.ref(`users/${currentStudentUid}`).once("value");
+  const studentData = studentSnap.val();
+
+  const newMsgRef = db.ref(`messages/${currentStudentUid}`).push();
+  await newMsgRef.set({
+    text,
+    senderName: studentData.name,
+    senderRole: "student",
+    senderUid: currentStudentUid,
+    timestamp: Date.now()
+  });
+
+  document.getElementById('studentMessageInput').value = '';
+}
   </script>
 
 </body>
