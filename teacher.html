@@ -199,6 +199,35 @@
   transform: translateY(-2px);
 }
 
+
+
+.modal {
+  position: fixed;
+  top:0; left:0;
+  width:100%; height:100%;
+  background: rgba(0,0,0,0.5);
+  display:flex; justify-content:center; align-items:center;
+}
+.modal-content {
+  background:#fff; padding:20px; border-radius:10px; width:400px; max-width:90%;
+  position:relative;
+}
+.close {
+  position:absolute; top:5px; right:10px; cursor:pointer; font-size:18px;
+}
+.student {
+  border:1px solid #ccc; border-radius:10px; padding:10px; margin:10px 0;
+  background:#f7f7f7; position:relative;
+}
+.student .actions button { margin-right:5px; }
+.student .row { display:flex; justify-content:space-between; align-items:center; margin-bottom:5px; }
+.bar { width:100%; height:8px; background:#ddd; border-radius:4px; margin-bottom:5px; overflow:hidden; }
+.fill.present { height:100%; background:#4caf50; width:0; transition:width 0.5s; }
+.fill.absent { height:100%; background:#f44336; width:0; transition:width 0.5s; }
+.student .message-btn { position:absolute; top:10px; right:10px; cursor:pointer; }
+
+
+
 </style>
 </head>
 <body>
@@ -300,7 +329,15 @@
 </div>
 
 
-
+<div id="teacherMessageModal" class="modal" style="display:none;">
+  <div class="modal-content">
+    <span class="close" onclick="closeTeacherMessageModal()">&times;</span>
+    <h3>Message to <span id="modalStudentName"></span></h3>
+    <div id="teacherMessageHistory" style="height:200px; overflow-y:auto; border:1px solid #ccc; padding:5px; margin-bottom:10px;"></div>
+    <textarea id="teacherMessageInput" placeholder="Type message" style="width:100%; height:50px;"></textarea>
+    <button onclick="sendTeacherMessage()">Send</button>
+  </div>
+</div>
 
     <div class="footer-space"></div>
   </div>
@@ -415,11 +452,11 @@ if(classNames.length){
     }
 
     // ==== Load students + build cards ====
-    async function loadStudents(classId) 
-    {
+    async function loadStudents(classId) {
   const container = document.getElementById('studentContainer');
   container.innerHTML = "Loading…";
   studentCards = [];
+
   if (!classId) { 
     container.innerHTML = "Select a class."; 
     return; 
@@ -428,6 +465,7 @@ if(classNames.length){
   const studentsSnap = await db.ref(`classes/${classId}/students`).once("value");
   const students = studentsSnap.val();
   allStudentsMap = students || {};
+
   if (!students) { 
     container.innerHTML = "No students in this class."; 
     return; 
@@ -437,77 +475,68 @@ if(classNames.length){
   const todaySnap = await db.ref(`attendance/${classId}/${d}`).once("value");
   const attendanceToday = todaySnap.val() || {};
 
-  // Cache all attendance once instead of fetching for every student
   const allDaysSnap = await db.ref(`attendance/${classId}`).once("value");
-const allDays = allDaysSnap.val() || {};
+  const allDays = allDaysSnap.val() || {};
 
-container.innerHTML = "";
-studentCards = []; // ✅ clear old cards
+  container.innerHTML = "";
+  studentCards = [];
 
-for (const [id, name] of Object.entries(students)) {
-  let presentCount = 0, absentCount = 0;
+  for (const [id, name] of Object.entries(students)) {
+    let presentCount = 0, absentCount = 0;
 
-  Object.values(allDays).forEach(day => {
-    if (day[id] === "Present") presentCount++;
-    if (day[id] === "Absent") absentCount++;
-  });
+    Object.values(allDays).forEach(day => {
+      if (day[id] === "Present") presentCount++;
+      if (day[id] === "Absent") absentCount++;
+    });
 
-  let statusToday;
-  if (tempAttendance[id]) {
-    statusToday = `${tempAttendance[id]} (Pending)`;
-  } else if (attendanceToday[id]) {
-    statusToday = attendanceToday[id];
-  } else {
-    statusToday = "Not Marked";
+    let statusToday = tempAttendance[id] || attendanceToday[id] || "Not Marked";
+
+    const card = document.createElement('div');
+    card.className = "student";
+    card.setAttribute("data-id", id);
+    card.setAttribute("data-name", name.toLowerCase());
+
+    card.innerHTML = `
+      <div class="row">
+        <div class="name">${name}</div>
+        <div class="stats">
+          📅 ${d} • Today: <strong>${statusToday}</strong> •
+          ✅ ${presentCount} | ❌ ${absentCount}
+        </div>
+        <div class="message-btn" onclick="openTeacherMessageModal('${id}','${name}')">💬</div>
+      </div>
+      <div>
+        <div class="bar-label">✅ Present %</div>
+        <div class="bar"><div class="fill present"></div></div>
+        <div class="bar-label">❌ Absent %</div>
+        <div class="bar"><div class="fill absent"></div></div>
+      </div>
+      <div class="row">
+        <div class="actions">
+          <button class="btn present ${tempAttendance[id]==='Present' ? 'selected' : ''}" 
+            onclick="stageAttendance('${id}','${name}','Present')">Present</button>
+          <button class="btn absent ${tempAttendance[id]==='Absent' ? 'selected' : ''}" 
+            onclick="stageAttendance('${id}','${name}','Absent')">Absent</button>
+          ${tempAttendance[id] ? `<button class="btn confirm" onclick="confirmAttendance('${id}','${name}')">✅ Confirm</button>` : ``}
+        </div>
+        <button class="btn ghost" onclick="deleteStudent('${id}','${name}')">🗑️ Delete</button>
+      </div>
+    `;
+
+    // Animate bars
+    setTimeout(() => {
+      const total = presentCount + absentCount || 1;
+      card.querySelector('.fill.present').style.width = `${(presentCount / total) * 100}%`;
+      card.querySelector('.fill.absent').style.width = `${(absentCount / total) * 100}%`;
+    }, 40);
+
+    container.appendChild(card);
+    studentCards.push(card);
   }
 
-  const card = document.createElement('div');
-  card.className = "student";
-  card.setAttribute("data-id", id);
-  card.setAttribute("data-name", name.toLowerCase());
-
-  card.innerHTML = `
-    <div class="row">
-      <div class="name">${name}</div>
-      <div class="stats">
-        📅 ${d} • Today: <strong>${statusToday}</strong> •
-        ✅ ${presentCount} | ❌ ${absentCount}
-      </div>
-    </div>
-    <div>
-      <div class="bar-label">✅ Present %</div>
-      <div class="bar"><div class="fill present"></div></div>
-      <div class="bar-label">❌ Absent %</div>
-      <div class="bar"><div class="fill absent"></div></div>
-    </div>
-    <div class="row">
-      <div class="actions">
-        <button class="btn present ${tempAttendance[id]==='Present' ? 'selected' : ''}" 
-          onclick="stageAttendance('${id}','${name}','Present')">Present</button>
-        <button class="btn absent ${tempAttendance[id]==='Absent' ? 'selected' : ''}" 
-          onclick="stageAttendance('${id}','${name}','Absent')">Absent</button>
-        ${tempAttendance[id] ? 
-          `<button class="btn confirm" onclick="confirmAttendance('${id}','${name}')">✅ Confirm</button>` 
-          : ``}
-      </div>
-      <button class="btn ghost" onclick="deleteStudent('${id}','${name}')">🗑️ Delete</button>
-    </div>
-  `;
-
-  // Animate bars
-  setTimeout(() => {
-    const total = presentCount + absentCount || 1;
-    card.querySelector('.fill.present').style.width = `${(presentCount / total) * 100}%`;
-    card.querySelector('.fill.absent').style.width = `${(absentCount / total) * 100}%`;
-  }, 40);
-
-  container.appendChild(card);
-  studentCards.push(card);
+  filterStudents(); // apply search filter
 }
 
-filterStudents(); // apply search filter if any
-
-    }
 
 
     // Example function to add student
@@ -846,6 +875,46 @@ async function onClassSelect(classId){
         loadStudents(assignedClass); refreshAnalytics();
       });
     }
+
+    let currentStudentUID = '';
+
+function openTeacherMessageModal(studentUID, studentName) {
+  currentStudentUID = studentUID;
+  document.getElementById('modalStudentName').textContent = studentName;
+  document.getElementById('teacherMessageModal').style.display = 'flex';
+  loadTeacherMessages();
+}
+
+function closeTeacherMessageModal() {
+  document.getElementById('teacherMessageModal').style.display = 'none';
+  document.getElementById('teacherMessageInput').value = '';
+  document.getElementById('teacherMessageHistory').innerHTML = '';
+}
+
+function loadTeacherMessages() {
+  const historyDiv = document.getElementById('teacherMessageHistory');
+  historyDiv.innerHTML = '';
+  const teacherUID = auth.currentUser.uid;
+
+  db.ref(`messages/${currentStudentUID}/${teacherUID}`).on('child_added', snap => {
+    const msg = snap.val();
+    const p = document.createElement('p');
+    p.textContent = msg;
+    historyDiv.appendChild(p);
+    historyDiv.scrollTop = historyDiv.scrollHeight;
+  });
+}
+
+async function sendTeacherMessage() {
+  const teacherUID = auth.currentUser.uid;
+  const msg = document.getElementById('teacherMessageInput').value.trim();
+  if(!msg) return alert("Enter message");
+
+  const timestamp = Date.now();
+  await db.ref(`messages/${currentStudentUID}/${teacherUID}/${timestamp}`).set(msg);
+  document.getElementById('teacherMessageInput').value = '';
+}
+
 
     function logout(){ auth.signOut().then(()=>location.href="./index.html"); }
   </script>
