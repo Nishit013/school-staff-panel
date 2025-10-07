@@ -616,39 +616,49 @@ function closeHomeworkModal() {
 // ===== GLOBAL VARIABLES =====
 let studentMessageListener = null;
 let currentReplyTeacherUID = null;
+let currentStudentUid = null;
 
 // ===== OPEN STUDENT MESSAGE MODAL =====
-async function openStudentMessageModal(studentId, studentName) {
+async function openStudentMessageModal(studentUid) {
+  currentStudentUid = studentUid;
   const modal = document.getElementById('studentMessageModal');
   modal.classList.add('show');
   document.getElementById('messageStudentName').textContent = "Messages";
-  currentStudentUid = studentId;
 
   const container = document.getElementById('studentMessagesContainer');
   container.innerHTML = "<p style='color:gray;text-align:center;'>Loading messages...</p>";
 
-  // Remove any old listener
+  // Remove previous listener if any
   if (studentMessageListener) db.ref('messages').off('value', studentMessageListener);
 
-  // Listen to all teacher nodes that contain messages for this student
-  studentMessageListener = db.ref('messages').on('value', async snap => {
+  // Listen to all messages under this student
+  studentMessageListener = db.ref(`messages`).on('value', async snap => {
     const allMessages = snap.val() || {};
     container.innerHTML = '';
-
     let teacherCount = 0;
+
+    // Loop through each teacher
     for (const [teacherUid, students] of Object.entries(allMessages)) {
-      if (!students[studentId]) continue;
+      if (!students[studentUid]) continue;
 
       teacherCount++;
       const teacherSnap = await db.ref(`users/${teacherUid}`).once('value');
       const teacherData = teacherSnap.val();
       const teacherName = teacherData ? teacherData.name : 'Teacher';
 
-      const messages = students[studentId];
+      const messages = students[studentUid];
       const sortedKeys = Object.keys(messages).sort();
 
-      container.innerHTML += `<div style="text-align:center; font-weight:bold; color:var(--primary); margin-top:10px;">${teacherName}</div>`;
+      // Display teacher header
+      const header = document.createElement('div');
+      header.style.textAlign = 'center';
+      header.style.fontWeight = 'bold';
+      header.style.color = 'var(--primary)';
+      header.style.marginTop = '10px';
+      header.textContent = teacherName;
+      container.appendChild(header);
 
+      // Display messages
       sortedKeys.forEach(ts => {
         const msgData = messages[ts];
         const msgText = typeof msgData === 'object' ? msgData.text : msgData;
@@ -667,12 +677,14 @@ async function openStudentMessageModal(studentId, studentName) {
         container.appendChild(div);
       });
 
-      // Set current reply teacher UID to the last teacher who messaged
+      // Set current reply teacher UID to last teacher in the loop
       currentReplyTeacherUID = teacherUid;
     }
 
-    if (teacherCount === 0)
+    if (teacherCount === 0) {
       container.innerHTML = "<p style='color:gray;text-align:center;'>No messages yet.</p>";
+      currentReplyTeacherUID = null;
+    }
 
     container.scrollTop = container.scrollHeight;
   });
@@ -699,6 +711,7 @@ async function sendMessageToTeacher() {
   const studentData = studentSnap.val();
   const timestamp = Date.now();
 
+  // Push message under teacherUID -> studentUID -> timestamp
   await db.ref(`messages/${currentReplyTeacherUID}/${currentStudentUid}/${timestamp}`).set({
     text,
     senderName: studentData.name,
@@ -728,9 +741,10 @@ async function loadStudentPanel() {
   `;
 
   document.getElementById('messageBtn').addEventListener('click', () => {
-    openStudentMessageModal(currentStudentUid, studentData.name);
+    openStudentMessageModal(currentStudentUid);
   });
 }
+
 
   </script>
 
