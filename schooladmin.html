@@ -70,13 +70,16 @@ body {
 
 /* Main content */
 /* Main content */
+/* Main content */
 .main {
   flex: 1;
   padding: 25px;
-  
   display: flex;
-  justify-content: center; /* center horizontally */
-  align-items: flex-start; /* start from top */
+  flex-direction: column; /* stack panels vertically */
+  align-items: center;    /* horizontal center */
+  justify-content: flex-start; /* keep top aligned */
+  gap: 20px;
+  min-height: calc(100vh - 40px);
 }
 
 /* Panel container */
@@ -84,13 +87,13 @@ body {
   background: var(--card);
   padding: 30px 35px;
   border-radius: 20px;
-  margin: 0 auto; /* center if flex doesn't work */
-  box-shadow: var(--shadow);
   width: 100%;
-  max-width: 520px; /* adjust width for professional compact look */
+  max-width: 520px;
   display: flex;
   flex-direction: column;
   gap: 25px;
+  box-shadow: var(--shadow);
+  /* REMOVE margin:auto and alignments that break flex */
 }
 
 
