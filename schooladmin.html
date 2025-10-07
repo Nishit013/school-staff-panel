@@ -21,11 +21,14 @@
 
 /* Body */
 body {
-  margin: 0;
+  margin:0;
   font-family: 'Inter', sans-serif;
   background: var(--bg);
   color: var(--text);
   display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 20px;
   min-height: 100vh;
 }
 
@@ -68,13 +71,20 @@ body {
 }
 
 /* Main Content */
+/* Main Content */
 .main {
   flex: 1;
-  display: flex;
-  justify-content: center; /* horizontal center */
-  align-items: center;     /* vertical center */
   padding: 25px;
-  min-height: 100vh;
+  display: flex;
+  justify-content: center;  /* horizontal center */
+  align-items: flex-start;  /* top align (or use center for vertical) */
+  min-height: calc(100vh - 40px); /* make sure panel has space */
+  gap: 20px; /* space between multiple panels if any */
+}
+
+/* Optional: if you want vertical centering */
+.main.center-vertical {
+  align-items: center; /* vertical center */
 }
 
 /* Panel Container */
@@ -89,8 +99,11 @@ body {
   flex-direction: column;
   gap: 30px;
   backdrop-filter: blur(var(--blur));
-  margin: auto; /* ensures it stays centered */
+
+  /* center itself if parent has extra space */
+  margin: auto;
 }
+
 
 /* Panel Title */
 .panel h3 {
@@ -208,7 +221,6 @@ body {
   background: #c0392b;
   transform: translateY(-1px);
 }
-
 
 
 
