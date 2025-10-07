@@ -83,6 +83,45 @@
   @media (min-width:680px){
     .analytics{grid-template-columns:repeat(3,1fr)}
   }
+
+
+
+  .subject-homework {
+  background: var(--card-bg);
+  padding: 1em;
+  margin: 1em 0;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+.subject-homework h4 { margin-bottom: 0.5em; }
+.subject-homework textarea {
+  width: 100%; height: 80px; margin-bottom: 0.5em;
+}
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit,minmax(100px,1fr));
+  gap: 10px;
+}
+.calendar-day {
+  background: var(--card-bg);
+  border-radius: 10px;
+  padding: 1em;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.calendar-day:hover { background: var(--accent); color: white; }
+
+.modal {
+  display: none; position: fixed; top:0; left:0; width:100%; height:100%;
+  background: rgba(0,0,0,0.6); justify-content: center; align-items: center;
+}
+.modal-content {
+  background: var(--card-bg); padding: 2em; border-radius: 12px;
+  max-width: 400px; width: 90%;
+}
+.close { float: right; cursor: pointer; font-size: 20px; }
+
 </style>
 </head>
 <body>
@@ -130,12 +169,18 @@
       </div>
 
       <!-- Homework Section -->
-      <div class="section">
-        <h3>Latest Homework</h3>
-        <div class="homework-list" id="homeworkList"></div>
-      </div>
+      <div id="homeworkCalendar" class="panel">
+  <h3>🗓️ Homework Calendar</h3>
+  <div id="calendarContainer"></div>
+  <div id="homeworkModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeHomeworkModal()">&times;</span>
+      <h4 id="modalDate"></h4>
+      <div id="modalHomeworkList"></div>
     </div>
   </div>
+</div>
+
 </body>
   <div class="footer-space"></div>
 
@@ -264,24 +309,40 @@ function logout() {
 
 
   // Load Homework for the logged-in student dynamically
-async function loadHomework(className) {
-    const snap = await db.ref(`homework/${className}`).once("value");
-    const homeworkList = document.getElementById('homeworkList');
-    homeworkList.innerHTML = ""; // clear previous homework
+async function loadHomeworkCalendar(classId) {
+  const cal = document.getElementById('calendarContainer');
+  const snap = await db.ref(`homework/${classId}`).once('value');
+  const allHW = snap.val() || {};
 
-    if (snap.exists()) {
-        const data = snap.val();
-        const sortedDates = Object.keys(data).sort((a, b) => new Date(b) - new Date(a)); // latest first
-        sortedDates.forEach(date => {
-            const hwDiv = document.createElement('div');
-            hwDiv.className = "homework-item";
-            hwDiv.innerHTML = `<strong>${date}:</strong> ${data[date]}`;
-            homeworkList.appendChild(hwDiv);
-        });
-    } else {
-        homeworkList.innerHTML = "<em>No homework assigned yet.</em>";
-    }
+  const dates = Object.keys(allHW).sort().reverse();
+  let html = "<div class='calendar-grid'>";
+  dates.forEach(date => {
+    html += `<div class="calendar-day" onclick="showHomework('${classId}','${date}')">${date}</div>`;
+  });
+  html += "</div>";
+  cal.innerHTML = html;
 }
+
+async function showHomework(classId, date) {
+  const modal = document.getElementById('homeworkModal');
+  const modalList = document.getElementById('modalHomeworkList');
+  document.getElementById('modalDate').textContent = date;
+
+  const snap = await db.ref(`homework/${classId}/${date}`).once('value');
+  const data = snap.val() || {};
+  let html = "<ul>";
+  Object.entries(data).forEach(([sub, hw]) => {
+    html += `<li><strong>${sub}:</strong> ${hw}</li>`;
+  });
+  html += "</ul>";
+
+  modalList.innerHTML = html;
+  modal.style.display = "block";
+}
+function closeHomeworkModal() {
+  document.getElementById('homeworkModal').style.display = "none";
+}
+
 </script>
 
 </body>
