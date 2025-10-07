@@ -878,43 +878,94 @@ async function onClassSelect(classId){
 
     let currentStudentUID = '';
 
+let teacherMessageListener = null;
+
+// ===== OPEN TEACHER MESSAGE MODAL =====
 function openTeacherMessageModal(studentUID, studentName) {
-  currentStudentUID = studentUID;
+  currentStudentUid = studentUID;
+  const modal = document.getElementById('teacherMessageModal');
+  modal.style.display = 'flex';
   document.getElementById('modalStudentName').textContent = studentName;
-  document.getElementById('teacherMessageModal').style.display = 'flex';
+
   loadTeacherMessages();
 }
 
+// ===== CLOSE TEACHER MESSAGE MODAL =====
 function closeTeacherMessageModal() {
-  document.getElementById('teacherMessageModal').style.display = 'none';
+  const modal = document.getElementById('teacherMessageModal');
+  modal.style.display = 'none';
   document.getElementById('teacherMessageInput').value = '';
   document.getElementById('teacherMessageHistory').innerHTML = '';
+
+  if (teacherMessageListener) {
+    const teacherUID = auth.currentUser.uid;
+    db.ref(`messages/${currentStudentUid}/${teacherUID}`).off('child_added', teacherMessageListener);
+    teacherMessageListener = null;
+  }
 }
 
+// ===== LOAD MESSAGES FOR TEACHER =====
 function loadTeacherMessages() {
   const historyDiv = document.getElementById('teacherMessageHistory');
   historyDiv.innerHTML = '';
   const teacherUID = auth.currentUser.uid;
 
-  db.ref(`messages/${currentStudentUID}/${teacherUID}`).on('child_added', snap => {
-    const msg = snap.val();
-    const p = document.createElement('p');
-    p.textContent = msg;
-    historyDiv.appendChild(p);
+  // Listen for new messages under this student -> teacher
+  teacherMessageListener = db.ref(`messages/${currentStudentUid}/${teacherUID}`).on('child_added', async snap => {
+    const msgData = snap.val();
+    let text, senderName, senderRole, timestamp;
+
+    if (typeof msgData === 'string') {
+      text = msgData;
+      senderName = "Student"; // fallback
+      senderRole = "student";
+      timestamp = parseInt(snap.key);
+    } else {
+      text = msgData.text;
+      senderName = msgData.senderName;
+      senderRole = msgData.senderRole;
+      timestamp = msgData.timestamp;
+    }
+
+    const msgDiv = document.createElement('div');
+    msgDiv.style.marginBottom = '6px';
+    msgDiv.style.padding = '6px 10px';
+    msgDiv.style.borderRadius = '10px';
+    msgDiv.style.maxWidth = '80%';
+    msgDiv.style.wordBreak = 'break-word';
+    msgDiv.style.background = senderRole === 'teacher' ? '#00bcd4' : '#e0e0e0';
+    msgDiv.style.color = senderRole === 'teacher' ? '#fff' : '#000';
+    msgDiv.style.alignSelf = senderRole === 'teacher' ? 'flex-start' : 'flex-end';
+    msgDiv.innerHTML = `<strong>${senderName}:</strong> ${text}<br><small style="font-size:10px; opacity:0.7;">${new Date(timestamp).toLocaleString()}</small>`;
+
+    historyDiv.appendChild(msgDiv);
     historyDiv.scrollTop = historyDiv.scrollHeight;
   });
 }
 
+// ===== SEND MESSAGE FROM TEACHER =====
 async function sendTeacherMessage() {
   const teacherUID = auth.currentUser.uid;
-  const msg = document.getElementById('teacherMessageInput').value.trim();
-  if(!msg) return alert("Enter message");
+  const msgInput = document.getElementById('teacherMessageInput');
+  const msg = msgInput.value.trim();
+  if (!msg) return alert("Enter message!");
+
+  // Get teacher info
+  const teacherSnap = await db.ref(`users/${teacherUID}`).once('value');
+  const teacherData = teacherSnap.val();
 
   const timestamp = Date.now();
-  await db.ref(`messages/${currentStudentUID}/${teacherUID}/${timestamp}`).set(msg);
-  document.getElementById('teacherMessageInput').value = '';
-}
 
+  await db.ref(`messages/${currentStudentUid}/${teacherUID}/${timestamp}`).set({
+    text: msg,
+    senderName: teacherData.name,
+    senderRole: "teacher",
+    senderUid: teacherUID,
+    timestamp
+  });
+
+  msgInput.value = '';
+}
 
     function logout(){ auth.signOut().then(()=>location.href="./index.html"); }
   </script>
