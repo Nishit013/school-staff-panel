@@ -192,17 +192,19 @@ async function loginStudent() {
 }
 
 // Show dashboard for the logged-in student
+showDashboard(currentStudent); // inside loginStudent()
+
 function showDashboard(student) {
-  document.getElementById('loginPanel').style.display = "none";
-  document.getElementById('dashboard').style.display = "block";
+    document.getElementById('loginPanel').style.display = "none";
+    document.getElementById('dashboard').style.display = "block";
 
-  document.getElementById('studentName').textContent = student.name;
-  document.getElementById('studentClass').textContent = student.class || "--";
-  document.getElementById('studentEmailShow').textContent = student.email || "--";
+    document.getElementById('studentName').textContent = student.name;
+    document.getElementById('studentClass').textContent = student.class || "--";
 
-  loadAttendance(student.class, student.uid);
-  loadHomework(student.class);
+    loadAttendance(student.class, student.uid); // pass class + UID
+    loadHomework(student.class);                // pass class
 }
+
 
 // Logout
 function logout() {
@@ -216,7 +218,7 @@ function logout() {
 
 
   // Load Attendance for student
-  async function loadAttendance(className, studentUID) {
+ async function loadAttendance(className, studentUID) {
     const snap = await db.ref(`attendance/${className}`).once('value');
     const data = snap.val() || {};
 
@@ -224,8 +226,8 @@ function logout() {
     const monthlyCounts = {};
 
     Object.keys(data).forEach(date => {
-      const status = data[date][studentUID];
-      if (!status) return;
+      const status = data[date][studentUID]; // check only this student's UID
+      if (!status) return; // skip if no record
       totalDays++;
       if (status === "Present") present++;
       if (status === "Absent") absent++;
@@ -236,13 +238,15 @@ function logout() {
       if(status==="Present") monthlyCounts[monthKey].present++;
     });
 
-    document.getElementById('totalDays').textContent = totalDays;
-    document.getElementById('daysPresent').textContent = present;
-    document.getElementById('daysAbsent').textContent = absent;
+    // Show KPIs
+    document.getElementById('kpiPresent').textContent = present;
+    document.getElementById('kpiAbsent').textContent = absent;
+    document.getElementById('kpiPercent').textContent = totalDays ? Math.round((present/totalDays)*100) + "%" : "0%";
 
     // Draw Chart
     const labels = Object.keys(monthlyCounts).sort();
     const dataPoints = labels.map(m => Math.round((monthlyCounts[m].present / monthlyCounts[m].total)*100));
+
     const ctx = document.getElementById('attendanceChart').getContext('2d');
     new Chart(ctx, {
       type: 'bar',
@@ -256,25 +260,28 @@ function logout() {
       },
       options: { responsive:true, scales:{y:{beginAtZero:true, max:100}} }
     });
-  }
+}
 
-  // Load Homework
-  // Example: Fetch homework for class 7A
-const className = "7A";
 
-db.ref("homework/" + className).once("value")
-  .then(snapshot => {
-    if(snapshot.exists()) {
-      const data = snapshot.val();
-      Object.keys(data).forEach(date => {
-        console.log("Date:", date, "Homework:", data[date]);
-      });
+  // Load Homework for the logged-in student dynamically
+async function loadHomework(className) {
+    const snap = await db.ref(`homework/${className}`).once("value");
+    const homeworkList = document.getElementById('homeworkList');
+    homeworkList.innerHTML = ""; // clear previous homework
+
+    if (snap.exists()) {
+        const data = snap.val();
+        const sortedDates = Object.keys(data).sort((a, b) => new Date(b) - new Date(a)); // latest first
+        sortedDates.forEach(date => {
+            const hwDiv = document.createElement('div');
+            hwDiv.className = "homework-item";
+            hwDiv.innerHTML = `<strong>${date}:</strong> ${data[date]}`;
+            homeworkList.appendChild(hwDiv);
+        });
     } else {
-      console.log("No homework found for", className);
+        homeworkList.innerHTML = "<em>No homework assigned yet.</em>";
     }
-  })
-  .catch(err => console.error(err));
-
+}
 </script>
 
 </body>
