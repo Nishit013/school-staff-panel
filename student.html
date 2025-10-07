@@ -86,41 +86,50 @@
 
 
 
-  .subject-homework {
-  background: var(--card-bg);
-  padding: 1em;
-  margin: 1em 0;
-  border-radius: 12px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-}
-.subject-homework h4 { margin-bottom: 0.5em; }
-.subject-homework textarea {
-  width: 100%; height: 80px; margin-bottom: 0.5em;
-}
-.calendar-grid {
+ .calendar-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit,minmax(100px,1fr));
+  grid-template-columns: repeat(5, 1fr);
   gap: 10px;
 }
 .calendar-day {
-  background: var(--card-bg);
-  border-radius: 10px;
-  padding: 1em;
+  padding: 10px;
+  background: #f0f0f0;
+  border-radius: 6px;
   text-align: center;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: 0.2s;
 }
-.calendar-day:hover { background: var(--accent); color: white; }
+.calendar-day:hover {
+  background: #cfd8ff;
+}
 
 .modal {
-  display: none; position: fixed; top:0; left:0; width:100%; height:100%;
-  background: rgba(0,0,0,0.6); justify-content: center; align-items: center;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: rgba(0,0,0,0.5);
 }
 .modal-content {
-  background: var(--card-bg); padding: 2em; border-radius: 12px;
-  max-width: 400px; width: 90%;
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  width: 350px;
+  max-height: 80%;
+  overflow-y: auto;
+  position: relative;
 }
-.close { float: right; cursor: pointer; font-size: 20px; }
+.modal-content .close {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  font-size: 20px;
+  cursor: pointer;
+}
 
 </style>
 </head>
@@ -169,17 +178,20 @@
       </div>
 
       <!-- Homework Section -->
-      <div id="homeworkCalendar" class="panel">
-  <h3>🗓️ Homework Calendar</h3>
+      <div id="homeworkPanelStudent">
+  <h3>📅 Homework Calendar</h3>
   <div id="calendarContainer"></div>
-  <div id="homeworkModal" class="modal">
-    <div class="modal-content">
-      <span class="close" onclick="closeHomeworkModal()">&times;</span>
-      <h4 id="modalDate"></h4>
-      <div id="modalHomeworkList"></div>
-    </div>
+</div>
+
+<!-- Homework Modal -->
+<div id="homeworkModal" class="modal" style="display:none;">
+  <div class="modal-content">
+    <span class="close" onclick="closeHomeworkModal()">&times;</span>
+    <h4 id="modalDate">Date</h4>
+    <div id="modalHomeworkList"></div>
   </div>
 </div>
+
 
 </body>
   <div class="footer-space"></div>
@@ -259,6 +271,38 @@ function logout() {
   document.getElementById('studentID').value = "";
 }
 
+// ===== Student Panel: Load homework calendar automatically =====
+auth.onAuthStateChanged(async (user) => {
+  if (!user) {
+    alert("Please log in to view the student panel.");
+    window.location.href = "index.html";
+    return;
+  }
+
+  const uid = user.uid;
+  const snap = await db.ref(`users/${uid}`).once("value");
+  const student = snap.val();
+
+  if (!student || student.role !== "student") {
+    alert("Access denied. Only students can log in here.");
+    window.location.href = "index.html";
+    return;
+  }
+
+  // Show student name (optional)
+  document.getElementById("studentName").textContent = student.name;
+
+  if (!student.class) {
+    document.getElementById("calendarContainer").innerHTML =
+      "<p>Your class is not assigned yet.</p>";
+    return;
+  }
+
+  const classId = student.class;
+
+  // Automatically load homework calendar for their class
+  loadHomeworkCalendar(classId);
+});
 
 
 
@@ -315,6 +359,11 @@ async function loadHomeworkCalendar(classId) {
   const allHW = snap.val() || {};
 
   const dates = Object.keys(allHW).sort().reverse();
+  if (!dates.length) {
+    cal.innerHTML = "<p>No homework uploaded yet.</p>";
+    return;
+  }
+
   let html = "<div class='calendar-grid'>";
   dates.forEach(date => {
     html += `<div class="calendar-day" onclick="showHomework('${classId}','${date}')">${date}</div>`;
@@ -330,6 +379,7 @@ async function showHomework(classId, date) {
 
   const snap = await db.ref(`homework/${classId}/${date}`).once('value');
   const data = snap.val() || {};
+
   let html = "<ul>";
   Object.entries(data).forEach(([sub, hw]) => {
     html += `<li><strong>${sub}:</strong> ${hw}</li>`;
@@ -337,11 +387,13 @@ async function showHomework(classId, date) {
   html += "</ul>";
 
   modalList.innerHTML = html;
-  modal.style.display = "block";
+  modal.style.display = "flex";
 }
+
 function closeHomeworkModal() {
   document.getElementById('homeworkModal').style.display = "none";
 }
+
 
 </script>
 
