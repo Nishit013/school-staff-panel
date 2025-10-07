@@ -263,6 +263,14 @@
   font-size: 20px;
   cursor: pointer;
 }
+.message-btn {
+  padding:6px 12px; 
+  border-radius:6px; 
+  background:#00bcd4; 
+  color:#fff; 
+  border:none; 
+  cursor:pointer;
+}
 
 
 </style>
@@ -307,7 +315,7 @@
           <div><div class="meta">Attendance %</div><div id="kpiPercent" class="val">0%</div></div>
         </div>
       </div>
-
+<div id="studentContainer" style="margin-top:16px;"></div>
       <!-- Attendance Graph -->
       <div class="section">
         <h3>Attendance This Month</h3>
@@ -399,22 +407,27 @@
 
   // ===== SHOW DASHBOARD =====
   function showDashboard(student) {
-    document.getElementById('loginPanel').style.display = "none";
-    document.getElementById('dashboard').style.display = "block";
+  document.getElementById('loginPanel').style.display = "none";
+  document.getElementById('dashboard').style.display = "block";
 
-    document.getElementById('studentName').textContent = student.name;
-    document.getElementById('studentClass').textContent = student.class || "--";
-    document.getElementById('studentEmailShow').textContent = student.email || "--";
+  document.getElementById('studentName').textContent = student.name;
+  document.getElementById('studentClass').textContent = student.class || "--";
+  document.getElementById('studentEmailShow').textContent = student.email || "--";
 
-    loadAttendance(student.class, student.uid);
+  currentStudentUid = student.uid; // <--- important
 
-    if (student.class) {
-      loadHomeworkCalendar(student.class);
-    } else {
-      document.getElementById('calendarContainer').innerHTML =
-        "<p>Your class is not assigned yet.</p>";
-    }
+  loadAttendance(student.class, student.uid);
+
+  if (student.class) {
+    loadHomeworkCalendar(student.class);
+  } else {
+    document.getElementById('calendarContainer').innerHTML =
+      "<p>Your class is not assigned yet.</p>";
   }
+
+  loadStudentPanel(); // <-- load message card
+}
+
 
   // ===== LOGOUT =====
   function logout() {
