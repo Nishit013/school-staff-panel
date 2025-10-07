@@ -213,11 +213,58 @@ body {
 
 
 
+body {
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+.wrapper {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 220px;
+  background: var(--secondary);
+  padding: 25px 15px;
+  border-radius: 0 12px 12px 0;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* Main Content */
+.main {
+  flex: 1;
+  display: flex;
+  justify-content: center; /* horizontal center */
+  align-items: center;     /* vertical center */
+  padding: 25px;
+}
+
+/* Panel */
+.panel {
+  background: var(--card);
+  padding: 35px 40px;
+  border-radius: 20px;
+  box-shadow: var(--shadow);
+  width: 100%;
+  max-width: 550px;
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  backdrop-filter: blur(var(--blur));
+}
 
 </style>
 </head>
 <body>
-
+<div class="wrapper"></div>
 <div class="sidebar">
   <h2>🏫 School Management</h2>
   <button onclick="showPanel('classes')">Classes</button>
@@ -274,7 +321,7 @@ body {
     <button onclick="addSubject()">➕ Add Subject</button>
   </div>
 </div>
-
+</div>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
