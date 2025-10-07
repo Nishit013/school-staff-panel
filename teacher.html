@@ -726,27 +726,25 @@ function updateConfirmAllButton() {
       });
     }
 
-    async function loadSubjectsForHomework(classId) {
-  const container = document.getElementById("subjectHomeworkContainer");
-  if (!classId) return container.innerHTML = "<p>Select a class first.</p>";
+    // 🔹 Load all classes into homework dropdown
+async function loadClassesForHomework() {
+  const classSelect = document.getElementById("classSelectForHomework");
+  classSelect.innerHTML = '<option value="">Select Class</option>';
 
-  const snap = await db.ref(`classes/${classId}/subjects`).once("value");
-  const subjects = snap.val() || {};
-  if (!Object.keys(subjects).length) {
-    return container.innerHTML = "<p>No subjects added yet.</p>";
-  }
+  const snap = await db.ref("classes").once("value");
+  const classes = snap.val() || {};
 
-  let html = "";
-  Object.keys(subjects).forEach(sub => {
-    html += `
-      <div class="subject-homework">
-        <h4>${sub}</h4>
-        <textarea id="hw_${sub}" placeholder="Enter ${sub} homework..."></textarea>
-        <button onclick="submitHomework('${classId}','${sub}')">📤 Submit</button>
-      </div>`;
+  Object.keys(classes).forEach(cls => {
+    const opt = document.createElement("option");
+    opt.value = cls;
+    opt.textContent = cls;
+    classSelect.appendChild(opt);
   });
-  container.innerHTML = html;
 }
+
+// 🔹 Call this after teacher login or when showing Homework panel
+loadClassesForHomework();
+
 
 async function submitHomework(classId, subject) {
   const text = document.getElementById(`hw_${subject}`).value.trim();
