@@ -150,52 +150,22 @@
   }
 
   // Teachers
-  // Teachers
-async function createTeacher() {
-  const name = document.getElementById('newTeacherName').value.trim();
-  const email = document.getElementById('newTeacherEmail').value.trim();
-  const password = document.getElementById('newTeacherPassword').value.trim(); // add input field for password
-
-  if(!name || !email || !password) return alert("Enter teacher name, email, and password");
-
-  try {
-    // 1️⃣ Create Firebase Auth user
-    const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
-    const uid = userCredential.user.uid;
-
-    // 2️⃣ Save teacher info in database
-    await db.ref(`users/${uid}`).set({
-      name,
-      email,
-      role: 'teacher'
-    });
-
-    alert(`Teacher ${name} created successfully!`);
-    document.getElementById('newTeacherName').value = '';
-    document.getElementById('newTeacherEmail').value = '';
-    document.getElementById('newTeacherPassword').value = '';
-
+  async function createTeacher() {
+    const name = document.getElementById('newTeacherName').value.trim();
+    const email = document.getElementById('newTeacherEmail').value.trim();
+    if(!name || !email) return alert("Enter teacher details");
+    const newId = db.ref('users').push().key;
+    await db.ref(`users/${newId}`).set({name,email,role:'teacher'});
     loadTeachers();
-
-  } catch (err) {
-    alert("Error: " + err.message);
   }
-}
-
-async function loadTeachers() {
-  const snap = await db.ref('users').once('value');
-  const users = snap.val() || {};
-  const ul = document.getElementById('existingTeachersList'); 
-  ul.innerHTML = '';
-  Object.entries(users).forEach(([uid,u])=>{
-    if(u.role==='teacher'){ 
-      const li=document.createElement('li'); 
-      li.textContent=`${u.name} (${u.email})`; 
-      ul.appendChild(li); 
-    }
-  });
-}
-
+  async function loadTeachers() {
+    const snap = await db.ref('users').once('value');
+    const users = snap.val() || {};
+    const ul = document.getElementById('existingTeachersList'); ul.innerHTML='';
+    Object.entries(users).forEach(([uid,u])=>{
+      if(u.role==='teacher'){ const li=document.createElement('li'); li.textContent=`${u.name} (${u.email})`; ul.appendChild(li); }
+    });
+  }
 
   // Students
   async function createStudent() {
