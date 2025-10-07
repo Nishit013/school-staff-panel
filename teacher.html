@@ -447,33 +447,44 @@ filterStudents(); // apply search filter if any
 
 
     // Example function to add student
-function addStudent(){
+function addStudent() {
   const name = document.getElementById('newStudentName').value.trim();
   const s = document.getElementById('addStudentStatus');
-  if(!assignedClass){
-    s.style.color='var(--danger)';
-    s.textContent='Please select a class first.';
+
+  if (!assignedClass) {
+    s.style.color = 'var(--danger)';
+    s.textContent = 'Please select a class first.';
     return;
   }
-  if(!name){
-    s.style.color='var(--danger)';
-    s.textContent='Enter a valid student name.';
+  if (!name) {
+    s.style.color = 'var(--danger)';
+    s.textContent = 'Enter a valid student name.';
     return;
   }
 
-  // Create unique ID (firebase push key)
+  // Generate unique ID (Firebase push key)
   const newId = db.ref(`classes/${assignedClass}/students`).push().key;
+
+  // Add student to class node
   db.ref(`classes/${assignedClass}/students/${newId}`).set(name)
-    .then(()=>{
-      s.style.color='var(--success)';
-      s.textContent=`Added ${name} ✅`;
-      document.getElementById('newStudentName').value="";
+    .then(() => {
+      // ✅ Add student to users node automatically
+      return db.ref(`users/${newId}`).set({
+        name: name,
+        class: assignedClass,
+        role: "student"
+      });
+    })
+    .then(() => {
+      s.style.color = 'var(--success)';
+      s.textContent = `Added ${name} ✅ | Student ID: ${newId}`;
+      document.getElementById('newStudentName').value = "";
       loadStudents(assignedClass); // refresh list
       refreshAnalytics();
     })
-    .catch(err=>{
-      s.style.color='var(--danger)';
-      s.textContent='Error: ' + err.message;
+    .catch(err => {
+      s.style.color = 'var(--danger)';
+      s.textContent = 'Error: ' + err.message;
     });
 }
 
