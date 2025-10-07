@@ -367,14 +367,20 @@
       });
 
       // Auto-select last class (if any)
-      if(classNames.length){
-        assignedClass = classNames[classNames.length-1];
-        sel.value = assignedClass;
-        document.getElementById('className').textContent = assignedClass;
-        await loadStudents(assignedClass);
-        attachAttendanceListener(); // live updates for the date
-        refreshAnalytics();         // fill KPI + summary + sparkline
-      } else {
+      // Auto-select last class (if any)
+if(classNames.length){
+    assignedClass = classNames[classNames.length-1];
+    sel.value = assignedClass;
+    document.getElementById('className').textContent = assignedClass;
+
+    await loadStudents(assignedClass);
+    attachAttendanceListener(); // live updates for the date
+    refreshAnalytics();         // fill KPI + summary + sparkline
+
+    // 🔹 Load homework subjects automatically for this class
+    await loadSubjectsForHomework();
+}
+ else {
         document.getElementById('studentContainer').innerHTML = '<div class="mini">Create a class to begin.</div>';
       }
     });
