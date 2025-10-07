@@ -596,15 +596,14 @@ function updateConfirmAllButton() {
 }
 
 
-    // ==== Realtime analytics (KPI + summary + sparkline) ====
-    async function refreshAnalytics() {
+  async function refreshAnalytics() {
   if (!assignedClass) return;
 
   const d = selectedDate();
   const students = allStudentsMap;
   const total = students ? Object.keys(students).length : 0;
 
-  // Fetch confirmed attendance from Firebase
+  // Fetch confirmed attendance
   const snap = await db.ref(`attendance/${assignedClass}/${d}`).once("value");
   const today = snap.val() || {};
   let present = 0, absent = 0;
@@ -617,26 +616,27 @@ function updateConfirmAllButton() {
   // Count staged (unconfirmed) attendance
   const stagedCount = Object.keys(tempAttendance).length;
 
-  // KPIs (percentage now includes staged)
-  const totalMarkedWithStaged = present + absent + stagedCount;
-  const percentToday = total ? Math.round((totalMarkedWithStaged / total) * 100) : 0;
+  // ✅ Percentage based on total students, not just marked ones
+  const percentToday = total ? Math.round((present / total) * 100) : 0;
 
+  // Display KPIs
   document.getElementById('kpiPresent').textContent = present;
   document.getElementById('kpiAbsent').textContent = absent;
   document.getElementById('kpiPercent').textContent = percentToday + "%";
 
-  // Summary
+  // Summary section
   document.getElementById('sumTotal').textContent = total;
   document.getElementById('sumMarked').textContent =
     (present + absent) + (stagedCount ? ` (+${stagedCount} staged)` : ``);
 
-  // Percent based only on confirmed marks
-  const confirmedPercent = total ? Math.round(((present + absent) / total) * 100) : 0;
+  // Optional: confirmed percent for marked students (can keep it if needed)
+  const confirmedPercent = (present + absent) && total ? Math.round((present / total) * 100) : 0;
   document.getElementById('sumPercent').textContent = confirmedPercent + "%";
 
-  // 7-day trend sparkline
+  // 7-day sparkline
   drawSparkline(await last7DaysPercent(assignedClass));
 }
+
 
 
     async function last7DaysPercent(classId){
