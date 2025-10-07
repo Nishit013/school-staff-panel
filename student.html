@@ -249,18 +249,67 @@ async function loginStudent() {
 }
 
 // Show dashboard for the logged-in student
-showDashboard(currentStudent); // inside loginStudent()
+async function showDashboard(student) {
+  document.getElementById('loginPanel').style.display = "none";
+  document.getElementById('dashboard').style.display = "block";
 
-function showDashboard(student) {
-    document.getElementById('loginPanel').style.display = "none";
-    document.getElementById('dashboard').style.display = "block";
+  document.getElementById('studentName').textContent = student.name;
+  document.getElementById('studentClass').textContent = student.class || "--";
 
-    document.getElementById('studentName').textContent = student.name;
-    document.getElementById('studentClass').textContent = student.class || "--";
+  loadAttendance(student.class, student.uid);
 
-    loadAttendance(student.class, student.uid); // pass class + UID
-    loadHomework(student.class);                // pass class
+  // ✅ Check if class exists before loading homework
+  if (student.class) {
+    await loadHomeworkCalendar(student.class);
+  } else {
+    document.getElementById('calendarContainer').innerHTML =
+      "<p>Your class is not assigned yet.</p>";
+  }
 }
+
+async function loadHomeworkCalendar(classId) {
+  const cal = document.getElementById('calendarContainer');
+  const snap = await db.ref(`homework/${classId}`).once('value');
+  const allHW = snap.val() || {};
+
+  const dates = Object.keys(allHW).sort().reverse();
+  if (!dates.length) {
+    cal.innerHTML = "<p>No homework uploaded yet.</p>";
+    return;
+  }
+
+  let html = "<div class='calendar-grid'>";
+  dates.forEach(date => {
+    html += `<div class="calendar-day" onclick="showHomework('${classId}','${date}')">${date}</div>`;
+  });
+  html += "</div>";
+  cal.innerHTML = html;
+}
+
+async function showHomework(classId, date) {
+  const modal = document.getElementById('homeworkModal');
+  const modalList = document.getElementById('modalHomeworkList');
+  document.getElementById('modalDate').textContent = date;
+
+  const snap = await db.ref(`homework/${classId}/${date}`).once('value');
+  const data = snap.val();
+
+  let html = "<ul>";
+  if (!data) {
+    html += "<li>No homework uploaded.</li>";
+  } else if (typeof data === "string") {
+    html += `<li>${data}</li>`;
+  } else {
+    Object.entries(data).forEach(([sub, hw]) => {
+      html += `<li><strong>${sub}:</strong> ${hw}</li>`;
+    });
+  }
+  html += "</ul>";
+
+  modalList.innerHTML = html;
+  modal.style.display = "flex";
+}
+
 
 
 // Logout
@@ -353,49 +402,7 @@ auth.onAuthStateChanged(async (user) => {
 
 
   // Load Homework for the logged-in student dynamically
-async function loadHomeworkCalendar(classId) {
-  const cal = document.getElementById('calendarContainer');
-  const snap = await db.ref(`homework/${classId}`).once('value');
-  const allHW = snap.val() || {};
 
-  const dates = Object.keys(allHW).sort().reverse();
-  if (!dates.length) {
-    cal.innerHTML = "<p>No homework uploaded yet.</p>";
-    return;
-  }
-
-  let html = "<div class='calendar-grid'>";
-  dates.forEach(date => {
-    // Make sure it is clickable even if value is string
-    html += `<div class="calendar-day" onclick="showHomework('${classId}','${date}')">${date}</div>`;
-  });
-  html += "</div>";
-  cal.innerHTML = html;
-}
-
-async function showHomework(classId, date) {
-  const modal = document.getElementById('homeworkModal');
-  const modalList = document.getElementById('modalHomeworkList');
-  document.getElementById('modalDate').textContent = date;
-
-  const snap = await db.ref(`homework/${classId}/${date}`).once('value');
-  const data = snap.val();
-
-  let html = "<ul>";
-  if (!data) {
-    html += "<li>No homework uploaded.</li>";
-  } else if (typeof data === "string") {
-    html += `<li>${data}</li>`; // single homework text
-  } else {
-    Object.entries(data).forEach(([sub, hw]) => {
-      html += `<li><strong>${sub}:</strong> ${hw}</li>`;
-    });
-  }
-  html += "</ul>";
-
-  modalList.innerHTML = html;
-  modal.style.display = "flex";
-}
 function closeHomeworkModal() {
   document.getElementById('homeworkModal').style.display = "none";
 }
