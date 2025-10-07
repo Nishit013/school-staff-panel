@@ -225,62 +225,62 @@ body {
   <input type="password" id="adminPassword" placeholder="Password">
   <button onclick="adminLogin()">Login</button>
 </div>
-<div class="sidebar">
-  <h2>🏫 School Management</h2>
-  <button onclick="showPanel('classes')">Classes</button>
-  <button onclick="showPanel('class-management'); loadClassesForSubjectPanel();">Subjects</button>
-  <button onclick="showPanel('teachers')">Teachers</button>
-  <button onclick="showPanel('students')">Students</button>
-  <button onclick="logout()">Logout</button>
-</div>
-
-
-<div class="main">
-  <!-- Classes Panel -->
-  <div id="panel-classes" class="panel">
-    <h3>Class Management</h3>
-    <input type="text" id="newClassName" placeholder="New Class Name">
-    <button onclick="createClass()">➕ Create Class</button>
-    <ul id="existingClassesList"></ul>
+<div id="main-panel" style="display:none;">
+  <div class="sidebar">
+    <h2>🏫 School Management</h2>
+    <button onclick="showPanel('classes')">Classes</button>
+    <button onclick="showPanel('class-management'); loadClassesForSubjectPanel();">Subjects</button>
+    <button onclick="showPanel('teachers')">Teachers</button>
+    <button onclick="showPanel('students')">Students</button>
+    <button onclick="logout()">Logout</button>
   </div>
 
-  <!-- Teachers Panel -->
-  <div id="panel-teachers" class="panel" style="display:none;">
-  <h3>Teacher Management</h3>
-  <input type="text" id="newTeacherName" placeholder="Name" style="padding:8px; width:100%; margin:5px 0; border-radius:6px;">
-  <input type="email" id="newTeacherEmail" placeholder="Email" style="padding:8px; width:100%; margin:5px 0; border-radius:6px;">
-  <input type="password" id="newTeacherPassword" placeholder="Password" style="padding:8px; width:100%; margin:5px 0; border-radius:6px;">
-  <button onclick="createTeacher()" style="margin-top:5px;">➕ Add Teacher</button>
-  <ul id="existingTeachersList" style="margin-top:10px;"></ul>
-</div>
+  <div class="main">
+    <!-- Classes Panel -->
+    <div id="panel-classes" class="panel">
+      <h3>Class Management</h3>
+      <input type="text" id="newClassName" placeholder="New Class Name">
+      <button onclick="createClass()">➕ Create Class</button>
+      <ul id="existingClassesList"></ul>
+    </div>
 
+    <!-- Teachers Panel -->
+    <div id="panel-teachers" class="panel" style="display:none;">
+      <h3>Teacher Management</h3>
+      <input type="text" id="newTeacherName" placeholder="Name">
+      <input type="email" id="newTeacherEmail" placeholder="Email">
+      <input type="password" id="newTeacherPassword" placeholder="Password">
+      <button onclick="createTeacher()">➕ Add Teacher</button>
+      <ul id="existingTeachersList"></ul>
+    </div>
 
-  <!-- Students Panel -->
-  <div id="panel-students" class="panel" style="display:none;">
-    <h3>Student Management</h3>
-    <input type="text" id="newStudentName" placeholder="Name">
-    <select id="selectClassForStudent"></select>
-    <button onclick="createStudent()">➕ Add Student</button>
-    <ul id="existingStudentsList"></ul>
+    <!-- Students Panel -->
+    <div id="panel-students" class="panel" style="display:none;">
+      <h3>Student Management</h3>
+      <input type="text" id="newStudentName" placeholder="Name">
+      <select id="selectClassForStudent"></select>
+      <button onclick="createStudent()">➕ Add Student</button>
+      <ul id="existingStudentsList"></ul>
+    </div>
+
+    <!-- Class Management Panel for Subjects -->
+    <div id="panel-class-management" class="panel" style="display:none;">
+      <h3>Class Management</h3>
+      <div class="select">
+        <label>Select Class:</label>
+        <select id="classSelectForSubjects" onchange="loadSubjectsForClass(this.value)">
+          <option value="">Loading...</option>
+        </select>
+      </div>
+      <div id="subjectListContainer"></div>
+      <div class="addSubjectBox">
+        <input type="text" id="newSubjectName" placeholder="Enter new subject">
+        <button onclick="addSubject()">➕ Add Subject</button>
+      </div>
+    </div>
   </div>
 </div>
-<div id="panel-class-management" class="panel" style="display:none;">
-  <h3>Class Management</h3>
 
-  <div class="select">
-    <label>Select Class:</label>
-    <select id="classSelectForSubjects" onchange="loadSubjectsForClass(this.value)">
-      <option value="">Loading...</option>
-    </select>
-  </div>
-
-  <div id="subjectListContainer"></div>
-
-  <div class="addSubjectBox">
-    <input type="text" id="newSubjectName" placeholder="Enter new subject">
-    <button onclick="addSubject()">➕ Add Subject</button>
-  </div>
-</div>
 
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
