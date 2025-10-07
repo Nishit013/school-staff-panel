@@ -138,6 +138,66 @@
 
 
 
+/* Homework Card Styles */
+.subject-homework {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: var(--shadow);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.subject-homework:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 24px rgba(0,0,0,0.4);
+}
+
+.subject-homework h4 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.subject-homework textarea {
+  width: 100%;
+  min-height: 80px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 14px;
+  resize: vertical;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.subject-homework textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 8px rgba(0, 188, 212, 0.4);
+}
+
+.subject-homework button {
+  align-self: flex-end;
+  padding: 8px 14px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--primary), var(--primary-2));
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  transition: transform 0.2s;
+}
+
+.subject-homework button:hover {
+  transform: translateY(-2px);
+}
 
 </style>
 </head>
@@ -235,10 +295,10 @@
 
     <!-- Homework (kept simple) -->
     <div id="homeworkPanel" class="panel">
-  <h3> Add Homework</h3>
-  <!-- Remove class selection dropdown -->
+  <h3>Add Homework</h3>
   <div id="subjectHomeworkContainer"></div>
 </div>
+
 
 
 
@@ -745,8 +805,10 @@ async function loadSubjectsForHomework() {
       </div>
     `;
   });
+
   container.innerHTML = html;
 }
+
 
 // Submit homework for the selected class and subject
 async function submitHomework(subject) {
