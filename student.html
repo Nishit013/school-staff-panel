@@ -175,15 +175,15 @@ async function loginStudent() {
   try {
     // Check if student exists in users node
     const snap = await db.ref(`users/${studentID}`).once('value');
-    const userData = snap.val();
+    const studentData = snap.val();
 
-    if (!userData || userData.role !== "student") {
+    if (!studentData || studentData.role !== "student") {
       document.getElementById('loginError').textContent = "Invalid Student ID!";
       return;
     }
 
-    // ✅ Successful login
-    currentStudent = { uid: studentID, ...userData };
+    // Successful login
+    currentStudent = { uid: studentID, ...studentData };
     showDashboard(currentStudent);
 
   } catch (err) {
@@ -191,6 +191,7 @@ async function loginStudent() {
   }
 }
 
+// Show dashboard for the logged-in student
 function showDashboard(student) {
   document.getElementById('loginPanel').style.display = "none";
   document.getElementById('dashboard').style.display = "block";
@@ -203,14 +204,13 @@ function showDashboard(student) {
   loadHomework(student.class);
 }
 
-// Logout function
+// Logout
 function logout() {
   currentStudent = null;
   document.getElementById('loginPanel').style.display = "block";
   document.getElementById('dashboard').style.display = "none";
   document.getElementById('studentID').value = "";
 }
-
 
 
 
