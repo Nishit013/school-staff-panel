@@ -141,21 +141,18 @@
   <div class="wrap">
 
     <!-- LOGIN PANEL -->
-    <!-- LOGIN PANEL -->
-<div id="loginPanel" class="profile">
-  <h2>Student Login</h2>
-  <div>
-    <input type="text" id="studentID" placeholder="Enter Your Student ID" 
-           style="padding:8px; width:100%; margin:5px 0; border-radius:8px;">
-    <button class="btn primary" onclick="loginStudent()">Login</button>
-    <div id="loginError" style="color:var(--danger); margin-top:8px;"></div>
-  </div>
-</div>
-
+    <div id="loginPanel" class="profile">
+      <h2>Student Login</h2>
+      <div>
+        <input type="text" id="studentID" placeholder="Enter Your Student ID" 
+               style="padding:8px; width:100%; margin:5px 0; border-radius:8px;">
+        <button class="btn primary" onclick="loginStudent()">Login</button>
+        <div id="loginError" style="color:var(--danger); margin-top:8px;"></div>
+      </div>
+    </div>
 
     <!-- DASHBOARD (hidden until login) -->
     <div id="dashboard" style="display:none;">
-
       <!-- Profile -->
       <div class="profile">
         <h2 id="studentName">Student Name</h2>
@@ -166,9 +163,15 @@
 
       <!-- KPIs -->
       <div class="analytics">
-        <div class="kpi"><div class="icon green">✔</div><div><div class="meta">Total Present</div><div id="kpiPresent" class="val">0</div></div></div>
-        <div class="kpi"><div class="icon red">✖</div><div><div class="meta">Total Absent</div><div id="kpiAbsent" class="val">0</div></div></div>
-        <div class="kpi"><div class="icon blue">%</div><div><div class="meta">Attendance %</div><div id="kpiPercent" class="val">0%</div></div></div>
+        <div class="kpi"><div class="icon green">✔</div>
+          <div><div class="meta">Total Present</div><div id="kpiPresent" class="val">0</div></div>
+        </div>
+        <div class="kpi"><div class="icon red">✖</div>
+          <div><div class="meta">Total Absent</div><div id="kpiAbsent" class="val">0</div></div>
+        </div>
+        <div class="kpi"><div class="icon blue">%</div>
+          <div><div class="meta">Attendance %</div><div id="kpiPercent" class="val">0%</div></div>
+        </div>
       </div>
 
       <!-- Attendance Graph -->
@@ -179,184 +182,120 @@
 
       <!-- Homework Section -->
       <div id="homeworkPanelStudent">
-  <h3>📅 Homework Calendar</h3>
-  <div id="calendarContainer"></div>
-</div>
+        <h3>📅 Homework Calendar</h3>
+        <div id="calendarContainer"></div>
+      </div>
 
-<!-- Homework Modal -->
-<div id="homeworkModal" class="modal" style="display:none;">
-  <div class="modal-content">
-    <span class="close" onclick="closeHomeworkModal()">&times;</span>
-    <h4 id="modalDate">Date</h4>
-    <div id="modalHomeworkList"></div>
+      <!-- Homework Modal -->
+      <div id="homeworkModal" class="modal" style="display:none;">
+        <div class="modal-content">
+          <span class="close" onclick="closeHomeworkModal()">&times;</span>
+          <h4 id="modalDate">Date</h4>
+          <div id="modalHomeworkList"></div>
+        </div>
+      </div>
+    </div>
+
   </div>
-</div>
 
-
-</body>
   <div class="footer-space"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
-
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-
-<script>
+  <script>
   // 1. Firebase config
   const firebaseConfig = {
     apiKey: "AIzaSyCfffexgO1rf6m6EteNNtFb_kZnRqqTUBM",
-      authDomain: "schoolmanagementsystem-32895.firebaseapp.com",
-      databaseURL: "https://schoolmanagementsystem-32895-default-rtdb.firebaseio.com",
-      projectId: "schoolmanagementsystem-32895",
-      storageBucket: "schoolmanagementsystem-32895.appspot.com",
-      messagingSenderId: "837516759841",
-      appId: "1:837516759841:web:31d6666b15037082fa6460"
-    };
+    authDomain: "schoolmanagementsystem-32895.firebaseapp.com",
+    databaseURL: "https://schoolmanagementsystem-32895-default-rtdb.firebaseio.com",
+    projectId: "schoolmanagementsystem-32895",
+    storageBucket: "schoolmanagementsystem-32895.appspot.com",
+    messagingSenderId: "837516759841",
+    appId: "1:837516759841:web:31d6666b15037082fa6460"
+  };
 
   // 2. Initialize Firebase
   firebase.initializeApp(firebaseConfig);
   const auth = firebase.auth();
   const db = firebase.database();
 
- let currentStudent = null;
+  let currentStudent = null;
 
-async function loginStudent() {
-  const studentID = document.getElementById("studentID").value.trim();
-  if (!studentID) {
-    document.getElementById('loginError').textContent = "Enter your Student ID!";
-    return;
-  }
-
-  try {
-    // Check if student exists in users node
-    const snap = await db.ref(`users/${studentID}`).once('value');
-    const studentData = snap.val();
-
-    if (!studentData || studentData.role !== "student") {
-      document.getElementById('loginError').textContent = "Invalid Student ID!";
+  // ===== LOGIN FUNCTION =====
+  async function loginStudent() {
+    const studentID = document.getElementById("studentID").value.trim();
+    if (!studentID) {
+      document.getElementById('loginError').textContent = "Enter your Student ID!";
       return;
     }
 
-    // Successful login
-    currentStudent = { uid: studentID, ...studentData };
+    try {
+      const snap = await db.ref(`users/${studentID}`).once('value');
+      const studentData = snap.val();
+
+      if (!studentData || studentData.role !== "student") {
+        document.getElementById('loginError').textContent = "Invalid Student ID!";
+        return;
+      }
+
+      currentStudent = { uid: studentID, ...studentData };
+      showDashboard(currentStudent);
+
+    } catch (err) {
+      document.getElementById('loginError').textContent = "Error: " + err.message;
+    }
+  }
+
+  // ===== SHOW DASHBOARD =====
+  function showDashboard(student) {
+    document.getElementById('loginPanel').style.display = "none";
+    document.getElementById('dashboard').style.display = "block";
+
+    document.getElementById('studentName').textContent = student.name;
+    document.getElementById('studentClass').textContent = student.class || "--";
+    document.getElementById('studentEmailShow').textContent = student.email || "--";
+
+    loadAttendance(student.class, student.uid);
+
+    if (student.class) {
+      loadHomeworkCalendar(student.class);
+    } else {
+      document.getElementById('calendarContainer').innerHTML =
+        "<p>Your class is not assigned yet.</p>";
+    }
+  }
+
+  // ===== LOGOUT =====
+  function logout() {
+    currentStudent = null;
+    document.getElementById('loginPanel').style.display = "block";
+    document.getElementById('dashboard').style.display = "none";
+    document.getElementById('studentID').value = "";
+  }
+
+  // ===== AUTH STATE LISTENER =====
+  auth.onAuthStateChanged(async (user) => {
+    if (!user) return;
+
+    const uid = user.uid;
+    const snap = await db.ref(`users/${uid}`).once("value");
+    const student = snap.val();
+
+    if (!student || student.role !== "student") {
+      alert("Access denied. Only students can log in here.");
+      window.location.href = "index.html";
+      return;
+    }
+
+    currentStudent = { uid, ...student };
     showDashboard(currentStudent);
-
-  } catch (err) {
-    document.getElementById('loginError').textContent = "Error: " + err.message;
-  }
-}
-
-// Show dashboard for the logged-in student
-async function showDashboard(student) {
-  document.getElementById('loginPanel').style.display = "none";
-  document.getElementById('dashboard').style.display = "block";
-
-  document.getElementById('studentName').textContent = student.name;
-  document.getElementById('studentClass').textContent = student.class || "--";
-
-  loadAttendance(student.class, student.uid);
-
-  // ✅ Check if class exists before loading homework
-  if (student.class) {
-    await loadHomeworkCalendar(student.class);
-  } else {
-    document.getElementById('calendarContainer').innerHTML =
-      "<p>Your class is not assigned yet.</p>";
-  }
-}
-
-async function loadHomeworkCalendar(classId) {
-  const cal = document.getElementById('calendarContainer');
-  const snap = await db.ref(`homework/${classId}`).once('value');
-  const allHW = snap.val() || {};
-
-  const dates = Object.keys(allHW).sort().reverse();
-  if (!dates.length) {
-    cal.innerHTML = "<p>No homework uploaded yet.</p>";
-    return;
-  }
-
-  let html = "<div class='calendar-grid'>";
-  dates.forEach(date => {
-    html += `<div class="calendar-day" onclick="showHomework('${classId}','${date}')">${date}</div>`;
   });
-  html += "</div>";
-  cal.innerHTML = html;
-}
 
-async function showHomework(classId, date) {
-  const modal = document.getElementById('homeworkModal');
-  const modalList = document.getElementById('modalHomeworkList');
-  document.getElementById('modalDate').textContent = date;
-
-  const snap = await db.ref(`homework/${classId}/${date}`).once('value');
-  const data = snap.val();
-
-  let html = "<ul>";
-  if (!data) {
-    html += "<li>No homework uploaded.</li>";
-  } else if (typeof data === "string") {
-    html += `<li>${data}</li>`;
-  } else {
-    Object.entries(data).forEach(([sub, hw]) => {
-      html += `<li><strong>${sub}:</strong> ${hw}</li>`;
-    });
-  }
-  html += "</ul>";
-
-  modalList.innerHTML = html;
-  modal.style.display = "flex";
-}
-
-
-
-// Logout
-function logout() {
-  currentStudent = null;
-  document.getElementById('loginPanel').style.display = "block";
-  document.getElementById('dashboard').style.display = "none";
-  document.getElementById('studentID').value = "";
-}
-
-// ===== Student Panel: Load homework calendar automatically =====
-auth.onAuthStateChanged(async (user) => {
-  if (!user) {
-    alert("Please log in to view the student panel.");
-    window.location.href = "index.html";
-    return;
-  }
-
-  const uid = user.uid;
-  const snap = await db.ref(`users/${uid}`).once("value");
-  const student = snap.val();
-
-  if (!student || student.role !== "student") {
-    alert("Access denied. Only students can log in here.");
-    window.location.href = "index.html";
-    return;
-  }
-
-  // Show student name (optional)
-  document.getElementById("studentName").textContent = student.name;
-
-  if (!student.class) {
-    document.getElementById("calendarContainer").innerHTML =
-      "<p>Your class is not assigned yet.</p>";
-    return;
-  }
-
-  const classId = student.class;
-
-  // Automatically load homework calendar for their class
-  loadHomeworkCalendar(classId);
-});
-
-
-
-  // Load Attendance for student
- async function loadAttendance(className, studentUID) {
+  // ===== LOAD ATTENDANCE =====
+  async function loadAttendance(className, studentUID) {
     const snap = await db.ref(`attendance/${className}`).once('value');
     const data = snap.val() || {};
 
@@ -364,51 +303,79 @@ auth.onAuthStateChanged(async (user) => {
     const monthlyCounts = {};
 
     Object.keys(data).forEach(date => {
-      const status = data[date][studentUID]; // check only this student's UID
-      if (!status) return; // skip if no record
+      const status = data[date]?.[studentUID];
+      if (!status) return;
       totalDays++;
       if (status === "Present") present++;
       if (status === "Absent") absent++;
 
-      const monthKey = date.slice(0,7); // YYYY-MM
-      if(!monthlyCounts[monthKey]) monthlyCounts[monthKey] = { present:0, total:0 };
+      const monthKey = date.slice(0,7);
+      if (!monthlyCounts[monthKey]) monthlyCounts[monthKey] = { present:0, total:0 };
       monthlyCounts[monthKey].total++;
-      if(status==="Present") monthlyCounts[monthKey].present++;
+      if (status === "Present") monthlyCounts[monthKey].present++;
     });
 
-    // Show KPIs
     document.getElementById('kpiPresent').textContent = present;
     document.getElementById('kpiAbsent').textContent = absent;
     document.getElementById('kpiPercent').textContent = totalDays ? Math.round((present/totalDays)*100) + "%" : "0%";
 
-    // Draw Chart
     const labels = Object.keys(monthlyCounts).sort();
     const dataPoints = labels.map(m => Math.round((monthlyCounts[m].present / monthlyCounts[m].total)*100));
 
     const ctx = document.getElementById('attendanceChart').getContext('2d');
     new Chart(ctx, {
       type: 'bar',
-      data: {
-        labels: labels,
-        datasets: [{
-          label: '% Attendance',
-          data: dataPoints,
-          backgroundColor: 'rgba(54, 162, 235, 0.6)'
-        }]
-      },
-      options: { responsive:true, scales:{y:{beginAtZero:true, max:100}} }
+      data: { labels, datasets:[{ label:'% Attendance', data:dataPoints, backgroundColor:'rgba(54,162,235,0.6)' }] },
+      options:{ responsive:true, scales:{y:{beginAtZero:true,max:100}} }
     });
-}
+  }
 
+  // ===== LOAD HOMEWORK CALENDAR =====
+  async function loadHomeworkCalendar(classId) {
+    const cal = document.getElementById('calendarContainer');
+    const snap = await db.ref(`homework/${classId}`).once('value');
+    const allHW = snap.val() || {};
 
-  // Load Homework for the logged-in student dynamically
+    const dates = Object.keys(allHW).sort().reverse();
+    if (!dates.length) {
+      cal.innerHTML = "<p>No homework uploaded yet.</p>";
+      return;
+    }
 
-function closeHomeworkModal() {
-  document.getElementById('homeworkModal').style.display = "none";
-}
+    let html = "<div class='calendar-grid'>";
+    dates.forEach(date => {
+      html += `<div class="calendar-day" onclick="showHomework('${classId}','${date}')">${date}</div>`;
+    });
+    html += "</div>";
+    cal.innerHTML = html;
+  }
 
+  // ===== SHOW HOMEWORK MODAL =====
+  async function showHomework(classId, date) {
+    const modal = document.getElementById('homeworkModal');
+    const modalList = document.getElementById('modalHomeworkList');
+    document.getElementById('modalDate').textContent = date;
 
-</script>
+    const snap = await db.ref(`homework/${classId}/${date}`).once('value');
+    const data = snap.val();
+
+    let html = "<ul>";
+    if (!data) html += "<li>No homework uploaded.</li>";
+    else if (typeof data === "string") html += `<li>${data}</li>`;
+    else Object.entries(data).forEach(([sub, hw]) => {
+      html += `<li><strong>${sub}:</strong> ${hw}</li>`;
+    });
+    html += "</ul>";
+
+    modalList.innerHTML = html;
+    modal.style.display = "flex";
+  }
+
+  function closeHomeworkModal() {
+    document.getElementById('homeworkModal').style.display = "none";
+  }
+
+  </script>
 
 </body>
 </html>
