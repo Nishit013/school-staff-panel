@@ -417,12 +417,12 @@ body {
   <div class="modal-content">
     <span class="close" onclick="closeStudentMessageModal()">&times;</span>
     <h2>Messages</h2>
-    <div id="studentMessagesContainer" style="height:300px; overflow-y:auto; border:1px solid #ccc; padding:5px;">
-  <p style="color:gray;text-align:center;">No messages yet</p>
-</div>
-
-    <div class="message-input" style="margin-top:10px;">
-      <input type="text" id="studentMessageInput" placeholder="Type your message..." style="width:80%;" />
+    <div class="messages-box" id="studentMessagesBox">
+      <!-- messages will load here -->
+      <p class="empty-msg">No messages yet</p>
+    </div>
+    <div class="message-input">
+      <input type="text" id="studentMessageInput" placeholder="Type your message..." />
       <button id="sendStudentMsg">Send</button>
     </div>
   </div>
