@@ -62,19 +62,26 @@ body {
 }
 
 /* Main content */
+/* Center the panel inside main content */
 .main {
   flex: 1;
   padding: 25px;
   overflow-y: auto;
+
+  display: flex;
+  justify-content: center; /* centers horizontally */
 }
 
-/* Panel Styles */
+/* Panel width */
 .panel {
   background: var(--card);
   padding: 20px;
   border-radius: 12px;
   margin-bottom: 30px;
   box-shadow: var(--shadow);
+
+  width: 100%;        /* fill container width up to max */
+  max-width: 600px;   /* limit maximum width for professional look */
 }
 
 .panel h3 {
