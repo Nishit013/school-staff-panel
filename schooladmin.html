@@ -220,7 +220,11 @@ body {
 </style>
 </head>
 <body>
-
+<div id="login-panel">
+  <input type="email" id="adminEmail" placeholder="Email">
+  <input type="password" id="adminPassword" placeholder="Password">
+  <button onclick="adminLogin()">Login</button>
+</div>
 <div class="sidebar">
   <h2>🏫 School Management</h2>
   <button onclick="showPanel('classes')">Classes</button>
@@ -296,7 +300,20 @@ body {
   firebase.initializeApp(firebaseConfig);
   const auth = firebase.auth();
   const db = firebase.database();
-
+async function adminLogin() {
+  const email = document.getElementById('adminEmail').value.trim();
+  const password = document.getElementById('adminPassword').value.trim();
+  try {
+    await auth.signInWithEmailAndPassword(email, password);
+    document.getElementById('login-panel').style.display = 'none';
+    document.getElementById('main-panel').style.display = 'flex';
+    loadClasses();
+    loadTeachers();
+    loadStudents();
+  } catch(err) {
+    alert(err.message);
+  }
+}
   // Show selected panel
   function showPanel(panel) {
     document.querySelectorAll('.panel').forEach(p=>p.style.display='none');
