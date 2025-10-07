@@ -277,23 +277,7 @@
   }
 
   // ===== AUTH STATE LISTENER =====
-  auth.onAuthStateChanged(async (user) => {
-    if (!user) return;
-
-    const uid = user.uid;
-    const snap = await db.ref(`users/${uid}`).once("value");
-    const student = snap.val();
-
-    if (!student || student.role !== "student") {
-      alert("Access denied. Only students can log in here.");
-      window.location.href = "index.html";
-      return;
-    }
-
-    currentStudent = { uid, ...student };
-    showDashboard(currentStudent);
-  });
-
+  
   // ===== LOAD ATTENDANCE =====
   async function loadAttendance(className, studentUID) {
     const snap = await db.ref(`attendance/${className}`).once('value');
