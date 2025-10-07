@@ -911,36 +911,45 @@ function loadTeacherMessages() {
   const teacherUID = auth.currentUser.uid;
 
   // Listen for new messages under this student -> teacher
-  teacherMessageListener = db.ref(`messages/${currentStudentUid}/${teacherUID}`).on('child_added', async snap => {
-    const msgData = snap.val();
-    let text, senderName, senderRole, timestamp;
+teacherMessageListener = db.ref(`messages/${currentStudentUid}/${teacherUID}`).on('child_added', async snap => {
+  const msgData = snap.val();
+  let text, senderName, senderRole, timestamp;
 
-    if (typeof msgData === 'string') {
-      text = msgData;
-      senderName = "Student"; // fallback
-      senderRole = "student";
-      timestamp = parseInt(snap.key);
+  if (typeof msgData === 'string') {
+    text = msgData;
+    timestamp = parseInt(snap.key);
+
+    // Determine role based on teacherUID
+    const teacherUID = auth.currentUser.uid;
+    senderRole = (teacherUID === snap.ref.parent.key) ? "teacher" : "student";
+
+    if (senderRole === "teacher") {
+      const teacherSnap = await db.ref(`users/${teacherUID}`).once('value');
+      senderName = teacherSnap.val().name;
     } else {
-      text = msgData.text;
-      senderName = msgData.senderName;
-      senderRole = msgData.senderRole;
-      timestamp = msgData.timestamp;
+      senderName = "Student";
     }
+  } else {
+    text = msgData.text;
+    senderName = msgData.senderName;
+    senderRole = msgData.senderRole;
+    timestamp = msgData.timestamp;
+  }
 
-    const msgDiv = document.createElement('div');
-    msgDiv.style.marginBottom = '6px';
-    msgDiv.style.padding = '6px 10px';
-    msgDiv.style.borderRadius = '10px';
-    msgDiv.style.maxWidth = '80%';
-    msgDiv.style.wordBreak = 'break-word';
-    msgDiv.style.background = senderRole === 'teacher' ? '#00bcd4' : '#e0e0e0';
-    msgDiv.style.color = senderRole === 'teacher' ? '#fff' : '#000';
-    msgDiv.style.alignSelf = senderRole === 'teacher' ? 'flex-start' : 'flex-end';
-    msgDiv.innerHTML = `<strong>${senderName}:</strong> ${text}<br><small style="font-size:10px; opacity:0.7;">${new Date(timestamp).toLocaleString()}</small>`;
+  const msgDiv = document.createElement('div');
+  msgDiv.style.marginBottom = '6px';
+  msgDiv.style.padding = '6px 10px';
+  msgDiv.style.borderRadius = '10px';
+  msgDiv.style.maxWidth = '80%';
+  msgDiv.style.wordBreak = 'break-word';
+  msgDiv.style.background = senderRole === 'teacher' ? '#00bcd4' : '#e0e0e0';
+  msgDiv.style.color = senderRole === 'teacher' ? '#fff' : '#000';
+  msgDiv.style.alignSelf = senderRole === 'teacher' ? 'flex-start' : 'flex-end';
+  msgDiv.innerHTML = `<strong>${senderName}:</strong> ${text}<br><small style="font-size:10px; opacity:0.7;">${new Date(timestamp).toLocaleString()}</small>`;
 
-    historyDiv.appendChild(msgDiv);
-    historyDiv.scrollTop = historyDiv.scrollHeight;
-  });
+  historyDiv.appendChild(msgDiv);
+  historyDiv.scrollTop = historyDiv.scrollHeight;
+});
 }
 
 // ===== SEND MESSAGE FROM TEACHER =====
