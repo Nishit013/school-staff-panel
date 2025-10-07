@@ -8,224 +8,230 @@
   --primary: #3498db;
   --primary-2: #2980b9;
   --secondary: #2c3e50;
-  --surface: rgba(40, 45, 65, 0.85); /* semi-transparent glass effect */
   --bg: #1e1e2f;
   --text: #ecf0f1;
-  --card: rgba(40, 45, 65, 0.85);
+  --card: rgba(40, 45, 65, 0.95);
   --success: #2ecc71;
   --danger: #e74c3c;
   --shadow: 0 8px 25px rgba(0,0,0,0.6);
-  --blur: 10px;
+  --blur: 12px;
+  --font: 'Segoe UI', sans-serif;
 }
 
-/* Body */
+/* Global */
 body {
   margin: 0;
-  font-family: "Segoe UI", sans-serif;
+  font-family: var(--font);
   background: var(--bg);
   color: var(--text);
   display: flex;
-  justify-content: center;
-  align-items: flex-start;
   height: 100vh;
-  padding: 20px;
-  backdrop-filter: blur(var(--blur));
+  overflow: hidden;
+}
+
+/* Login panel */
+#login-panel {
+  margin: auto;
+  background: var(--card);
+  padding: 40px 50px;
+  border-radius: 20px;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 320px;
+}
+#login-panel input {
+  padding: 12px 15px;
+  border-radius: 12px;
+  border: none;
+  background: rgba(255,255,255,0.05);
+  color: var(--text);
+  font-size: 15px;
+}
+#login-panel button {
+  padding: 12px 15px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg,var(--primary),var(--primary-2));
+  color: #fff;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.3s;
+}
+#login-panel button:hover {
+  transform: translateY(-2px);
+}
+
+/* Main panel wrapper */
+#main-panel {
+  display: none;
+  flex: 1;
+  display: flex;
+  overflow: hidden;
 }
 
 /* Sidebar */
 .sidebar {
-  width: 220px;
+  width: 250px;
   background: var(--secondary);
-  padding: 20px;
+  padding: 30px 20px;
   display: flex;
   flex-direction: column;
-  border-radius: 0 12px 12px 0;
-  box-shadow: var(--shadow);
+  border-right: 1px solid rgba(255,255,255,0.1);
+  gap: 20px;
 }
-
 .sidebar h2 {
-  font-size: 20px;
-  margin-bottom: 25px;
-  text-align:center;
+  font-size: 22px;
   color: var(--primary);
+  text-align: center;
+  margin-bottom: 20px;
 }
-
 .sidebar button {
-  background: var(--primary);
+  padding: 12px 20px;
+  background: transparent;
   border: none;
-  color: #fff;
-  padding: 12px;
-  margin: 8px 0;
-  cursor: pointer;
-  border-radius: 8px;
+  color: var(--text);
   font-weight: 600;
-  transition: 0.25s all ease;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: 0.3s;
+  text-align: left;
 }
-
 .sidebar button:hover {
-  background: var(--primary-2);
-  transform: translateX(3px);
+  background: var(--primary);
+  color: #fff;
+  transform: translateX(5px);
 }
 
-/* Main content */
-/* Main content */
 /* Main content */
 .main {
   flex: 1;
-  padding: 25px;
+  padding: 30px;
+  overflow-y: auto;
   display: flex;
-  flex-direction: column; /* stack panels vertically */
-  align-items: center;    /* horizontal center */
-  justify-content: flex-start; /* keep top aligned */
-  gap: 20px;
-  min-height: calc(100vh - 40px);
+  flex-direction: column;
+  gap: 30px;
+  justify-content: flex-start;
 }
 
-/* Panel container */
+/* Panel */
 .panel {
   background: var(--card);
   padding: 30px 35px;
   border-radius: 20px;
+  box-shadow: var(--shadow);
   width: 100%;
-  max-width: 520px;
+  max-width: 720px;
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 25px;
-  box-shadow: var(--shadow);
-  /* REMOVE margin:auto and alignments that break flex */
+  gap: 20px;
 }
-
-
-/* Panel title */
 .panel h3 {
   font-size: 24px;
   font-weight: 700;
-  text-align: center;
   color: var(--primary);
+  text-align: center;
   border-bottom: 2px solid var(--primary-2);
   padding-bottom: 8px;
   margin-bottom: 20px;
 }
 
-/* Add subject section */
+/* Inputs */
+.panel input, .panel select {
+  padding: 12px 15px;
+  border-radius: 12px;
+  border: none;
+  background: rgba(255,255,255,0.05);
+  color: var(--text);
+  font-size: 15px;
+  width: 100%;
+}
+.panel input:focus, .panel select:focus {
+  outline: none;
+  box-shadow: 0 0 6px var(--primary);
+}
+
+/* Buttons */
+.panel button {
+  padding: 12px 20px;
+  border-radius: 12px;
+  border: none;
+  background: linear-gradient(135deg,var(--primary),var(--primary-2));
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.3s;
+}
+.panel button:hover {
+  transform: translateY(-2px);
+}
+
+/* Lists */
+.subject-list, #existingClassesList, #existingTeachersList, #existingStudentsList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.subject-list li, #existingClassesList li, #existingTeachersList li, #existingStudentsList li {
+  background: rgba(255,255,255,0.05);
+  padding: 12px 18px;
+  border-radius: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 1px solid rgba(255,255,255,0.1);
+  box-shadow: 3px 3px 10px rgba(0,0,0,0.5);
+}
+.subject-list li span { font-weight: 600; }
+.del-btn {
+  background: var(--danger);
+  border: none;
+  padding: 6px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  color: #fff;
+  transition: 0.2s;
+}
+.del-btn:hover { background: #c0392b; }
+
+/* Add subject box */
 .addSubjectBox {
   display: flex;
   gap: 15px;
   justify-content: center;
   align-items: center;
 }
+.addSubjectBox input { flex: 1; }
 
-.addSubjectBox input {
-  flex: 1;
-  padding: 14px 18px;
-  border-radius: 16px;
-  border: none;
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--text);
-  font-size: 15px;
-  box-shadow:
-    inset 3px 3px 8px rgba(0,0,0,0.5),
-    inset -2px -2px 6px rgba(255,255,255,0.1);
-  transition: all 0.3s ease;
-  backdrop-filter: blur(6px);
+/* Scrollbars */
+.main::-webkit-scrollbar {
+  width: 10px;
 }
-
-.addSubjectBox input::placeholder {
-  color: rgba(255,255,255,0.5);
-}
-
-.addSubjectBox input:focus {
-  outline: none;
-  box-shadow:
-    0 0 6px var(--primary),
-    inset 3px 3px 8px rgba(0,0,0,0.5),
-    inset -2px -2px 6px rgba(255,255,255,0.1);
-}
-
-/* Add button */
-.addSubjectBox button {
-  padding: 14px 20px;
-  border-radius: 16px;
-  border: none;
-  background: linear-gradient(135deg, var(--primary), var(--primary-2));
-  color: #fff;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.5);
-}
-
-.addSubjectBox button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 22px rgba(0,0,0,0.6);
-}
-
-/* Subject list */
-.subject-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.subject-list li {
-  background: rgba(255,255,255,0.05);
-  padding: 14px 18px;
-  border-radius: 16px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border: 1px solid rgba(255,255,255,0.08);
-  box-shadow:
-    3px 3px 12px rgba(0,0,0,0.5),
-    -2px -2px 8px rgba(255,255,255,0.05);
-  transition: all 0.3s ease;
-}
-
-.subject-list li:hover {
+.main::-webkit-scrollbar-thumb {
   background: rgba(255,255,255,0.1);
-  border-color: var(--primary);
-  transform: translateY(-2px);
+  border-radius: 8px;
 }
-
-.subject-list li span {
-  font-weight: 600;
-  color: var(--text);
+.main::-webkit-scrollbar-track {
+  background: rgba(0,0,0,0.1);
 }
-
-.subject-list li .del-btn {
-  background: var(--danger);
-  color: #fff;
-  border: none;
-  padding: 8px 12px;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.25s ease;
-  box-shadow: 0 3px 12px rgba(0,0,0,0.4);
-}
-
-.subject-list li .del-btn:hover {
-  background: #c0392b;
-  transform: translateY(-1px);
-}
-
-
-
-
-
-
 </style>
 </head>
 <body>
+
+<!-- Login -->
 <div id="login-panel">
   <input type="email" id="adminEmail" placeholder="Email">
   <input type="password" id="adminPassword" placeholder="Password">
   <button onclick="adminLogin()">Login</button>
 </div>
-<div id="main-panel" style="display:none;">
+
+<!-- Main Panel -->
+<div id="main-panel">
   <div class="sidebar">
     <h2>🏫 School Management</h2>
     <button onclick="showPanel('classes')">Classes</button>
@@ -263,9 +269,9 @@ body {
       <ul id="existingStudentsList"></ul>
     </div>
 
-    <!-- Class Management Panel for Subjects -->
+    <!-- Subjects Panel -->
     <div id="panel-class-management" class="panel" style="display:none;">
-      <h3>Class Management</h3>
+      <h3>Class Subjects</h3>
       <div class="select">
         <label>Select Class:</label>
         <select id="classSelectForSubjects" onchange="loadSubjectsForClass(this.value)">
@@ -281,25 +287,23 @@ body {
   </div>
 </div>
 
-
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-
 <script>
-  // Firebase config
-  const firebaseConfig = {
-    apiKey: "AIzaSyCfffexgO1rf6m6EteNNtFb_kZnRqqTUBM",
-      authDomain: "schoolmanagementsystem-32895.firebaseapp.com",
-      databaseURL: "https://schoolmanagementsystem-32895-default-rtdb.firebaseio.com",
-      projectId: "schoolmanagementsystem-32895",
-      storageBucket: "schoolmanagementsystem-32895.appspot.com",
-      messagingSenderId: "837516759841",
-      appId: "1:837516759841:web:31d6666b15037082fa6460"
-    };
-  firebase.initializeApp(firebaseConfig);
-  const auth = firebase.auth();
-  const db = firebase.database();
+// Firebase initialization (same as your existing code)
+const firebaseConfig = {
+  apiKey: "AIzaSyCfffexgO1rf6m6EteNNtFb_kZnRqqTUBM",
+  authDomain: "schoolmanagementsystem-32895.firebaseapp.com",
+  databaseURL: "https://schoolmanagementsystem-32895-default-rtdb.firebaseio.com",
+  projectId: "schoolmanagementsystem-32895",
+  storageBucket: "schoolmanagementsystem-32895.appspot.com",
+  messagingSenderId: "837516759841",
+  appId: "1:837516759841:web:31d6666b15037082fa6460"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.database();
 async function adminLogin() {
   const email = document.getElementById('adminEmail').value.trim();
   const password = document.getElementById('adminPassword').value.trim();
