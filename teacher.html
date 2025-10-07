@@ -299,7 +299,8 @@
       dateEl.value = todayISO();
 
       // Load teacher's classes
-      const classesSnap = await db.ref("classes").orderByChild("createdBy").equalTo(user.uid).once("value");
+      const classesSnap = await db.ref("classes").once("value");
+
       const classes = classesSnap.val() || {};
       const classNames = Object.keys(classes);
       const sel = document.getElementById('classSelector');
