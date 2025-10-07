@@ -616,18 +616,18 @@ function closeHomeworkModal() {
 // ===== GLOBAL VARIABLES =====
 let studentMessageListener = null;
 let currentStudentUid = null;
+let lastTeacherUID = null; // store teacher to reply
 
 // ===== OPEN STUDENT MESSAGE MODAL =====
 function openStudentMessageModal(studentUid) {
   currentStudentUid = studentUid;
   const modal = document.getElementById('studentMessageModal');
   modal.classList.add('show');
-  document.getElementById('messageStudentName').textContent = "Messages";
 
-  const container = document.getElementById('studentMessagesContainer');
+  const container = document.getElementById('studentMessagesBox');
   container.innerHTML = "<p style='color:gray;text-align:center;'>Loading messages...</p>";
 
-  // Remove previous listener if any
+  // Remove previous listener
   if (studentMessageListener) db.ref(`messages/${studentUid}`).off('value', studentMessageListener);
 
   studentMessageListener = db.ref(`messages/${studentUid}`).on('value', async snap => {
@@ -637,9 +637,11 @@ function openStudentMessageModal(studentUid) {
     const teacherUIDs = Object.keys(teachersMessages);
     if (teacherUIDs.length === 0) {
       container.innerHTML = "<p style='color:gray;text-align:center;'>No messages yet.</p>";
+      lastTeacherUID = null;
       return;
     }
 
+    // Loop through each teacher
     for (const teacherUID of teacherUIDs) {
       const teacherSnap = await db.ref(`users/${teacherUID}`).once('value');
       const teacherData = teacherSnap.val();
@@ -676,21 +678,25 @@ function openStudentMessageModal(studentUid) {
         div.innerHTML = `<strong>${senderName}:</strong> ${msgText}<br><small style="font-size:10px; opacity:0.7;">${new Date(parseInt(ts)).toLocaleString()}</small>`;
         container.appendChild(div);
       });
+
+      // store last teacher UID for replying
+      lastTeacherUID = teacherUID;
     }
 
     container.scrollTop = container.scrollHeight;
   });
 }
 
-
 // ===== CLOSE MESSAGE MODAL =====
 function closeStudentMessageModal() {
   const modal = document.getElementById('studentMessageModal');
   modal.classList.remove('show');
-  const container = document.getElementById('studentMessagesContainer');
+
+  const container = document.getElementById('studentMessagesBox');
   container.innerHTML = '';
 
-  if (studentMessageListener) db.ref('messages').off('value', studentMessageListener);
+  if (studentMessageListener) db.ref(`messages/${currentStudentUid}`).off('value', studentMessageListener);
+  lastTeacherUID = null;
 }
 
 // ===== SEND MESSAGE TO TEACHER =====
@@ -699,36 +705,23 @@ async function sendMessageToTeacher() {
   const text = input.value.trim();
   if (!text) return alert("Enter a message!");
   if (!currentStudentUid) return alert("Student UID missing!");
+  if (!lastTeacherUID) return alert("No teacher to reply to yet!");
 
-  // Ask the student which teacher to send to
-  const container = document.getElementById('studentMessagesContainer');
-  const teacherDivs = container.querySelectorAll("div[style*='text-align: center']");
-  if (teacherDivs.length === 0) return alert("No teacher to send message to yet!");
-
-  const teacherName = teacherDivs[teacherDivs.length - 1].textContent; // last teacher
-  // Find teacher UID by matching name
-  let teacherUID = null;
-  const snap = await db.ref(`users`).once('value');
-  const users = snap.val();
-  for (const uid in users) {
-    if (users[uid].name === teacherName) {
-      teacherUID = uid;
-      break;
-    }
-  }
-  if (!teacherUID) return alert("Teacher not found!");
+  const studentSnap = await db.ref(`users/${currentStudentUid}`).once('value');
+  const studentData = studentSnap.val();
 
   const timestamp = Date.now();
-  await db.ref(`messages/${currentStudentUid}/${teacherUID}/${timestamp}`).set({
+  await db.ref(`messages/${currentStudentUid}/${lastTeacherUID}/${timestamp}`).set({
     text,
     senderRole: "student",
-    senderName: users[currentStudentUid].name || "Student",
+    senderName: studentData.name,
     senderUid: currentStudentUid,
     timestamp
   });
 
   input.value = '';
 }
+
 // ===== LOAD STUDENT PANEL =====
 async function loadStudentPanel() {
   const container = document.getElementById('studentContainer');
@@ -749,6 +742,9 @@ async function loadStudentPanel() {
   document.getElementById('messageBtn').addEventListener('click', () => {
     openStudentMessageModal(currentStudentUid);
   });
+
+  // Attach send button event
+  document.getElementById('sendStudentMsg').addEventListener('click', sendMessageToTeacher);
 }
 
 
