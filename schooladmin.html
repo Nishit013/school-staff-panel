@@ -102,6 +102,23 @@
     <ul id="existingStudentsList"></ul>
   </div>
 </div>
+<div id="panel-class-management" class="panel" style="display:none;">
+  <h3>Class Management</h3>
+
+  <div class="select">
+    <label>Select Class:</label>
+    <select id="classSelectForSubjects" onchange="loadSubjectsForClass(this.value)">
+      <option value="">Loading...</option>
+    </select>
+  </div>
+
+  <div id="subjectListContainer"></div>
+
+  <div class="addSubjectBox">
+    <input type="text" id="newSubjectName" placeholder="Enter new subject">
+    <button onclick="addSubject()">➕ Add Subject</button>
+  </div>
+</div>
 
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
@@ -233,6 +250,49 @@ async function loadTeachers() {
         dropdown.appendChild(opt);
       }
     });
+  }
+}
+async function loadClassesForSubjectPanel() {
+  const snap = await db.ref("classes").once("value");
+  const classes = snap.val() || {};
+  const sel = document.getElementById("classSelectForSubjects");
+  sel.innerHTML = '<option value="">Select Class</option>';
+  Object.keys(classes).forEach(cid => {
+    const opt = document.createElement("option");
+    opt.value = cid;
+    opt.textContent = cid;
+    sel.appendChild(opt);
+  });
+}
+
+async function loadSubjectsForClass(classId) {
+  const box = document.getElementById("subjectListContainer");
+  if (!classId) return box.innerHTML = "<p>Select a class first.</p>";
+
+  const snap = await db.ref(`classes/${classId}/subjects`).once("value");
+  const subjects = snap.val() || {};
+
+  let html = "<ul class='subject-list'>";
+  Object.keys(subjects).forEach(sub => {
+    html += `<li>${sub} <button onclick="deleteSubject('${classId}','${sub}')">❌</button></li>`;
+  });
+  html += "</ul>";
+  box.innerHTML = html;
+}
+
+async function addSubject() {
+  const classId = document.getElementById("classSelectForSubjects").value;
+  const sub = document.getElementById("newSubjectName").value.trim();
+  if (!classId || !sub) return alert("Select class and enter subject name");
+  await db.ref(`classes/${classId}/subjects/${sub}`).set(true);
+  document.getElementById("newSubjectName").value = "";
+  loadSubjectsForClass(classId);
+}
+
+async function deleteSubject(classId, sub) {
+  if (confirm(`Delete subject ${sub}?`)) {
+    await db.ref(`classes/${classId}/subjects/${sub}`).remove();
+    loadSubjectsForClass(classId);
   }
 }
 
