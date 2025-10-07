@@ -615,11 +615,10 @@ function closeHomeworkModal() {
 
 // ===== GLOBAL VARIABLES =====
 let studentMessageListener = null;
-let currentReplyTeacherUID = null;
 let currentStudentUid = null;
 
 // ===== OPEN STUDENT MESSAGE MODAL =====
-async function openStudentMessageModal(studentUid) {
+function openStudentMessageModal(studentUid) {
   currentStudentUid = studentUid;
   const modal = document.getElementById('studentMessageModal');
   modal.classList.add('show');
@@ -629,25 +628,25 @@ async function openStudentMessageModal(studentUid) {
   container.innerHTML = "<p style='color:gray;text-align:center;'>Loading messages...</p>";
 
   // Remove previous listener if any
-  if (studentMessageListener) db.ref('messages').off('value', studentMessageListener);
+  if (studentMessageListener) db.ref(`messages/${studentUid}`).off('value', studentMessageListener);
 
-  // Listen to all messages under this student
-  studentMessageListener = db.ref(`messages`).on('value', async snap => {
-    const allMessages = snap.val() || {};
+  studentMessageListener = db.ref(`messages/${studentUid}`).on('value', async snap => {
+    const teachersMessages = snap.val() || {};
     container.innerHTML = '';
-    let teacherCount = 0;
 
-    // Loop through each teacher
-    for (const [teacherUid, students] of Object.entries(allMessages)) {
-      if (!students[studentUid]) continue;
+    const teacherUIDs = Object.keys(teachersMessages);
+    if (teacherUIDs.length === 0) {
+      container.innerHTML = "<p style='color:gray;text-align:center;'>No messages yet.</p>";
+      return;
+    }
 
-      teacherCount++;
-      const teacherSnap = await db.ref(`users/${teacherUid}`).once('value');
+    for (const teacherUID of teacherUIDs) {
+      const teacherSnap = await db.ref(`users/${teacherUID}`).once('value');
       const teacherData = teacherSnap.val();
       const teacherName = teacherData ? teacherData.name : 'Teacher';
 
-      const messages = students[studentUid];
-      const sortedKeys = Object.keys(messages).sort();
+      const messages = teachersMessages[teacherUID];
+      const sortedTimestamps = Object.keys(messages).sort();
 
       // Display teacher header
       const header = document.createElement('div');
@@ -659,9 +658,11 @@ async function openStudentMessageModal(studentUid) {
       container.appendChild(header);
 
       // Display messages
-      sortedKeys.forEach(ts => {
-        const msgData = messages[ts];
-        const msgText = typeof msgData === 'object' ? msgData.text : msgData;
+      sortedTimestamps.forEach(ts => {
+        const msg = messages[ts];
+        const msgText = typeof msg === 'string' ? msg : msg.text;
+        const senderRole = (typeof msg === 'object' && msg.senderRole) ? msg.senderRole : 'teacher';
+        const senderName = (typeof msg === 'object' && msg.senderName) ? msg.senderName : teacherName;
 
         const div = document.createElement('div');
         div.style.marginBottom = '6px';
@@ -669,26 +670,18 @@ async function openStudentMessageModal(studentUid) {
         div.style.borderRadius = '10px';
         div.style.maxWidth = '80%';
         div.style.wordBreak = 'break-word';
-        div.style.background = msgData.senderRole === 'teacher' ? '#00bcd4' : '#e0e0e0';
-        div.style.color = msgData.senderRole === 'teacher' ? '#fff' : '#000';
-        div.style.alignSelf = msgData.senderRole === 'teacher' ? 'flex-start' : 'flex-end';
-        div.innerHTML = `<strong>${msgData.senderName || teacherName}:</strong> ${msgText}
-          <br><small style="font-size:10px; opacity:0.7;">${new Date(parseInt(ts)).toLocaleString()}</small>`;
+        div.style.background = senderRole === 'teacher' ? '#00bcd4' : '#e0e0e0';
+        div.style.color = senderRole === 'teacher' ? '#fff' : '#000';
+        div.style.alignSelf = senderRole === 'teacher' ? 'flex-start' : 'flex-end';
+        div.innerHTML = `<strong>${senderName}:</strong> ${msgText}<br><small style="font-size:10px; opacity:0.7;">${new Date(parseInt(ts)).toLocaleString()}</small>`;
         container.appendChild(div);
       });
-
-      // Set current reply teacher UID to last teacher in the loop
-      currentReplyTeacherUID = teacherUid;
-    }
-
-    if (teacherCount === 0) {
-      container.innerHTML = "<p style='color:gray;text-align:center;'>No messages yet.</p>";
-      currentReplyTeacherUID = null;
     }
 
     container.scrollTop = container.scrollHeight;
   });
 }
+
 
 // ===== CLOSE MESSAGE MODAL =====
 function closeStudentMessageModal() {
@@ -702,27 +695,40 @@ function closeStudentMessageModal() {
 
 // ===== SEND MESSAGE TO TEACHER =====
 async function sendMessageToTeacher() {
-  const text = document.getElementById('studentMessageInput').value.trim();
+  const input = document.getElementById('studentMessageInput');
+  const text = input.value.trim();
   if (!text) return alert("Enter a message!");
-  if (!currentReplyTeacherUID)
-    return alert("No teacher conversation found. Wait for a teacher to message you first.");
+  if (!currentStudentUid) return alert("Student UID missing!");
 
-  const studentSnap = await db.ref(`users/${currentStudentUid}`).once('value');
-  const studentData = studentSnap.val();
+  // Ask the student which teacher to send to
+  const container = document.getElementById('studentMessagesContainer');
+  const teacherDivs = container.querySelectorAll("div[style*='text-align: center']");
+  if (teacherDivs.length === 0) return alert("No teacher to send message to yet!");
+
+  const teacherName = teacherDivs[teacherDivs.length - 1].textContent; // last teacher
+  // Find teacher UID by matching name
+  let teacherUID = null;
+  const snap = await db.ref(`users`).once('value');
+  const users = snap.val();
+  for (const uid in users) {
+    if (users[uid].name === teacherName) {
+      teacherUID = uid;
+      break;
+    }
+  }
+  if (!teacherUID) return alert("Teacher not found!");
+
   const timestamp = Date.now();
-
-  // Push message under teacherUID -> studentUID -> timestamp
-  await db.ref(`messages/${currentReplyTeacherUID}/${currentStudentUid}/${timestamp}`).set({
+  await db.ref(`messages/${currentStudentUid}/${teacherUID}/${timestamp}`).set({
     text,
-    senderName: studentData.name,
     senderRole: "student",
+    senderName: users[currentStudentUid].name || "Student",
     senderUid: currentStudentUid,
     timestamp
   });
 
-  document.getElementById('studentMessageInput').value = '';
+  input.value = '';
 }
-
 // ===== LOAD STUDENT PANEL =====
 async function loadStudentPanel() {
   const container = document.getElementById('studentContainer');
