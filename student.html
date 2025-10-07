@@ -417,12 +417,12 @@ body {
   <div class="modal-content">
     <span class="close" onclick="closeStudentMessageModal()">&times;</span>
     <h2>Messages</h2>
-    <div class="messages-box" id="studentMessagesBox">
+    <div id="studentMessagesContainer" style="height:300px; overflow-y:auto; border:1px solid #ccc; padding:5px;">
       <!-- messages will load here -->
-      <p class="empty-msg">No messages yet</p>
+      <p style="color:gray;text-align:center;">No messages yet</p>
     </div>
-    <div class="message-input">
-      <input type="text" id="studentMessageInput" placeholder="Type your message..." />
+    <div class="message-input" style="margin-top:10px;">
+      <input type="text" id="studentMessageInput" placeholder="Type your message..." style="width:80%;" />
       <button id="sendStudentMsg">Send</button>
     </div>
   </div>
@@ -745,6 +745,7 @@ async function loadStudentPanel() {
 
   // Attach send button event
   document.getElementById('sendStudentMsg').addEventListener('click', sendMessageToTeacher);
+container.scrollTop = container.scrollHeight; 
 }
 
 
