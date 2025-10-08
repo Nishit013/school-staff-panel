@@ -518,6 +518,37 @@ teacherAuth.onAuthStateChanged(async user => {
 
   document.getElementById("teacherName").textContent = u.name || "(unknown)";
 
+  // Set default date = today
+  const dateEl = document.getElementById('attendanceDate');
+  dateEl.value = todayISO();
+
+  // Load teacher's classes
+  const classesSnap = await teacherDb.ref("classes").once("value"); // <-- use teacherDb
+  const classes = classesSnap.val() || {};
+  const classNames = Object.keys(classes);
+  const sel = document.getElementById('classSelector');
+  sel.innerHTML = classNames.length ? '<option value="">— Select —</option>' : '<option value="">No classes yet</option>';
+  classNames.forEach(cid => {
+    const o = document.createElement('option'); 
+    o.value = cid; 
+    o.textContent = cid; 
+    sel.appendChild(o);
+  });
+
+  // Auto-select last class (if any)
+  if(classNames.length){
+    assignedClass = classNames[classNames.length-1];
+    sel.value = assignedClass;
+    document.getElementById('className').textContent = assignedClass;
+
+    await loadStudents(assignedClass);       // make sure this function uses teacherDb
+    attachAttendanceListener();              // live updates for the date
+    refreshAnalytics();                      // fill KPI + summary + sparkline
+    await loadSubjectsForHomework();         // load homework subjects automatically
+  } else {
+    document.getElementById('studentContainer').innerHTML = '<div class="mini">Create a class to begin.</div>';
+  }
+});
 
 // Teacher logout
 function logoutTeacher() {
@@ -526,39 +557,6 @@ function logoutTeacher() {
   });
 }
 
-      // Set default date = today
-      const dateEl = document.getElementById('attendanceDate');
-      dateEl.value = todayISO();
-
-      // Load teacher's classes
-      const classesSnap = await db.ref("classes").once("value");
-
-      const classes = classesSnap.val() || {};
-      const classNames = Object.keys(classes);
-      const sel = document.getElementById('classSelector');
-      sel.innerHTML = classNames.length ? '<option value="">— Select —</option>' : '<option value="">No classes yet</option>';
-      classNames.forEach(cid=>{
-        const o = document.createElement('option'); o.value = cid; o.textContent = cid; sel.appendChild(o);
-      });
-
-      // Auto-select last class (if any)
-      // Auto-select last class (if any)
-if(classNames.length){
-    assignedClass = classNames[classNames.length-1];
-    sel.value = assignedClass;
-    document.getElementById('className').textContent = assignedClass;
-
-    await loadStudents(assignedClass);
-    attachAttendanceListener(); // live updates for the date
-    refreshAnalytics();         // fill KPI + summary + sparkline
-
-    // 🔹 Load homework subjects automatically for this class
-    await loadSubjectsForHomework();
-}
- else {
-        document.getElementById('studentContainer').innerHTML = '<div class="mini">Create a class to begin.</div>';
-      }
-    });
 
     // ==== Live listener for selected date ====
     function attachAttendanceListener(){
