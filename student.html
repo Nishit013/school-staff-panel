@@ -665,14 +665,14 @@ body {
 
   // ===== SHOW DASHBOARD =====
   function showDashboard(student) {
-  document.getElementById('loginPanel').style.display = "none";
+  document.getElementById('loginPanel').style.display = "none";  // hide flex container
   document.getElementById('dashboard').style.display = "block";
 
   document.getElementById('studentName').textContent = student.name;
   document.getElementById('studentClass').textContent = student.class || "--";
   document.getElementById('studentEmailShow').textContent = student.email || "--";
 
-  currentStudentUid = student.uid; // <--- important
+  currentStudentUid = student.uid;
 
   loadAttendance(student.class, student.uid);
 
@@ -683,17 +683,21 @@ body {
       "<p>Your class is not assigned yet.</p>";
   }
 
-  loadStudentPanel(); // <-- load message card
+  loadStudentPanel();
 }
+
 
 
   // ===== LOGOUT =====
   function logout() {
-    currentStudent = null;
-    document.getElementById('loginPanel').style.display = "block";
-    document.getElementById('dashboard').style.display = "none";
-    document.getElementById('studentID').value = "";
-  }
+  currentStudent = null;
+  const loginPanel = document.getElementById('loginPanel');
+  loginPanel.style.display = "flex";  // <-- keep it flex to stay centered
+  document.getElementById('dashboard').style.display = "none";
+  document.getElementById('studentID').value = "";
+  document.getElementById('loginError').textContent = ""; // optional: clear error
+}
+
 
   // ===== AUTH STATE LISTENER =====
   
