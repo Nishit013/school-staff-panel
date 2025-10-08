@@ -342,6 +342,97 @@ body {
 
 
 
+
+
+/* calendar header & grid */
+#calendarContainer .calendar-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:8px;
+  padding:6px 4px;
+}
+#calendarContainer .calendar-header .month-label{
+  font-weight:700;
+  color:var(--primary);
+}
+#calendarContainer .calendar-header .cal-nav{
+  background:transparent;
+  border:none;
+  color:var(--text);
+  font-size:20px;
+  cursor:pointer;
+  padding:4px 8px;
+  border-radius:6px;
+}
+#calendarContainer .calendar-header .cal-nav:hover{
+  background:rgba(255,255,255,0.03);
+}
+
+/* weekday row */
+#calendarContainer .calendar-weekdays{
+  display:grid;
+  grid-template-columns:repeat(7,1fr);
+  gap:8px;
+  margin-bottom:6px;
+}
+#calendarContainer .calendar-weekdays .weekday{
+  text-align:center;
+  font-size:12px;
+  color:var(--muted);
+  font-weight:700;
+}
+
+/* grid */
+#calendarContainer .calendar-grid{
+  display:grid;
+  grid-template-columns:repeat(7,1fr);
+  gap:8px;
+}
+
+/* other-month (muted) */
+#calendarContainer .calendar-other{
+  padding:10px;
+  border-radius:10px;
+  text-align:center;
+  color:var(--muted);
+  background:transparent;
+  border:1px solid transparent;
+}
+
+/* day cells (will inherit your .calendar-day styles, override small things) */
+#calendarContainer .calendar-day{
+  padding:10px;
+  border-radius:10px;
+  text-align:center;
+  background:var(--surface-2);
+  border:1px solid var(--border);
+  cursor:pointer;
+  display:flex;
+  align-items:flex-start;
+  justify-content:flex-start;
+  min-height:56px;
+}
+#calendarContainer .calendar-day .day-num{
+  font-weight:700;
+  width:100%;
+  text-align:right;
+  color:var(--text);
+}
+
+/* today/hasHomework */
+#calendarContainer .calendar-day.today{
+  border:2px solid var(--primary);
+  box-shadow:0 6px 16px rgba(0,188,212,0.08);
+}
+#calendarContainer .calendar-day.hasHomework{
+  background:linear-gradient(135deg,var(--primary),var(--primary-2));
+  color:#fff;
+  border-color:var(--primary-2);
+}
+
+
 </style>
 </head>
 <body>
@@ -552,36 +643,132 @@ body {
   }
 
   // ===== LOAD HOMEWORK CALENDAR =====
-  async function loadHomeworkCalendar(classId) {
-  const cal = document.getElementById('calendarContainer');
-  cal.innerHTML = "";
+ // Calendar helpers & state
+let calendarYear = null;
+let calendarMonth = null; // 0-11
+let calendarClassId = null;
 
+function pad(n){ return String(n).padStart(2,'0'); }
+function formatDateYYYYMMDD(date){
+  return `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}`;
+}
+
+const MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+
+/**
+ * Load & render calendar for a class, optional year/month.
+ * If year/month not provided, it renders current month.
+ */
+async function loadHomeworkCalendar(classId, year=null, month=null) {
+  calendarClassId = classId;
+
+  // default to current month/year
+  const now = new Date();
+  if (year === null) year = now.getFullYear();
+  if (month === null) month = now.getMonth();
+
+  calendarYear = year;
+  calendarMonth = month;
+
+  // fetch homework for this class (we'll check dates locally)
   const snap = await db.ref(`homework/${classId}`).once('value');
   const allHW = snap.val() || {};
 
-  const today = new Date();
-  const month = today.getMonth(); // 0-11
-  const year = today.getFullYear();
+  const cal = document.getElementById('calendarContainer');
+  cal.innerHTML = ''; // clear
 
-  const firstDay = new Date(year, month, 1);
-  const lastDay = new Date(year, month + 1, 0);
-  const totalDays = lastDay.getDate();
+  // header with prev/next
+  const header = document.createElement('div');
+  header.className = 'calendar-header';
+  header.innerHTML = `
+    <button type="button" class="cal-nav" aria-label="Previous month" onclick="prevCalendarMonth()">‹</button>
+    <div class="month-label">${MONTH_NAMES[calendarMonth]} ${calendarYear}</div>
+    <button type="button" class="cal-nav" aria-label="Next month" onclick="nextCalendarMonth()">›</button>
+  `;
+  cal.appendChild(header);
 
-  let html = "";
+  // weekday headings (optional)
+  const weekNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const weekRow = document.createElement('div');
+  weekRow.className = 'calendar-weekdays';
+  weekRow.innerHTML = weekNames.map(w => `<div class="weekday">${w}</div>`).join('');
+  cal.appendChild(weekRow);
 
-  for (let d = 1; d <= totalDays; d++) {
-    const dateObj = new Date(year, month, d);
-    const dateStr = dateObj.toISOString().split('T')[0]; // YYYY-MM-DD
+  // grid container
+  const grid = document.createElement('div');
+  grid.className = 'calendar-grid';
 
-    let classes = "calendar-day";
-    if (dateStr === today.toISOString().split('T')[0]) classes += " today";
-    if (allHW[dateStr]) classes += " hasHomework";
+  // compute needed values
+  const firstDay = new Date(calendarYear, calendarMonth, 1);
+  const startWeekday = firstDay.getDay(); // 0(Sun) - 6(Sat)
+  const daysInMonth = new Date(calendarYear, calendarMonth + 1, 0).getDate();
+  const prevMonthLastDay = new Date(calendarYear, calendarMonth, 0).getDate(); // last day of prev month
+  const todayStr = formatDateYYYYMMDD(new Date());
 
-    html += `<div class="${classes}" onclick="showHomework('${classId}','${dateStr}')">${d}</div>`;
+  // render leading previous-month days (optional, muted)
+  for (let i = 0; i < startWeekday; i++) {
+    const dayNum = prevMonthLastDay - (startWeekday - 1 - i);
+    const el = document.createElement('div');
+    el.className = 'calendar-other';
+    el.textContent = dayNum;
+    grid.appendChild(el);
   }
 
-  cal.innerHTML = html;
+  // render days of current month
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateObj = new Date(calendarYear, calendarMonth, d);
+    const dateStr = formatDateYYYYMMDD(dateObj);
+
+    const cell = document.createElement('div');
+    cell.className = 'calendar-day';
+    if (dateStr === todayStr) cell.classList.add('today');
+
+    // mark homework
+    if (allHW[dateStr]) {
+      cell.classList.add('hasHomework');
+    }
+
+    cell.dataset.date = dateStr;
+    cell.innerHTML = `<div class="day-num">${d}</div>`;
+
+    // only those days should be clickable
+    cell.style.cursor = 'pointer';
+    cell.addEventListener('click', () => {
+      // call your existing handler
+      showHomework(calendarClassId, dateStr);
+    });
+
+    grid.appendChild(cell);
+  }
+
+  // render trailing next-month cells (optional to keep grid tidy up to 42 cells)
+  // compute total cells to make full weeks (optional)
+  const totalCells = startWeekday + daysInMonth;
+  const trailing = (totalCells % 7) === 0 ? 0 : (7 - (totalCells % 7));
+  for (let t = 1; t <= trailing; t++) {
+    const el = document.createElement('div');
+    el.className = 'calendar-other';
+    el.textContent = t;
+    grid.appendChild(el);
+  }
+
+  cal.appendChild(grid);
 }
+
+/* navigation helpers */
+function prevCalendarMonth(){
+  let m = calendarMonth - 1;
+  let y = calendarYear;
+  if (m < 0) { m = 11; y -= 1; }
+  loadHomeworkCalendar(calendarClassId, y, m);
+}
+function nextCalendarMonth(){
+  let m = calendarMonth + 1;
+  let y = calendarYear;
+  if (m > 11) { m = 0; y += 1; }
+  loadHomeworkCalendar(calendarClassId, y, m);
+}
+
 
 
   // ===== SHOW HOMEWORK MODAL =====
