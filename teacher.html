@@ -476,6 +476,8 @@
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.database();
+const teacherAuth = firebase.auth();
+const teacherDb = firebase.database();
 
     // ==== State ====
     let assignedClass = "";
@@ -497,9 +499,6 @@
 
     // ==== Auth & bootstrap ====
 // Create named app instance for Teacher Panel
-const teacherApp = firebase.initializeApp(firebaseConfig, "teacherPanel");
-const teacherAuth = teacherApp.auth();
-const teacherDb = teacherApp.database();
 
 // Protect teacher panel
 teacherAuth.onAuthStateChanged(async user => {
