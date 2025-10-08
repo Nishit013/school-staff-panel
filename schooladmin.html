@@ -502,10 +502,12 @@ const auth = firebase.auth();
 const db = firebase.database();
 
 
-// Initialize separate Firebase app for School Admin
+// Create named app instance for School Admin
 const schoolAdminApp = firebase.initializeApp(firebaseConfig, "schoolAdmin");
+const schoolAuth = schoolAdminApp.auth();
+const schoolDb = schoolAdminApp.database();
 
-
+// LOGIN
 async function adminLogin() {
   const email = document.getElementById('adminEmail').value.trim();
   const password = document.getElementById('adminPassword').value.trim();
@@ -516,38 +518,30 @@ async function adminLogin() {
   }
 
   try {
-    await auth.signInWithEmailAndPassword(email, password);
-
-    // Hide login, show main panel
-    document.getElementById('login-panel').style.display = 'flex';  // ensure flex to stay centered
-    document.getElementById('main-panel').style.display = 'flex';
+    await schoolAuth.signInWithEmailAndPassword(email, password);
     document.getElementById('login-panel').style.display = 'none';
-
-    // Clear error
+    document.getElementById('main-panel').style.display = 'flex';
     document.getElementById('loginError').textContent = '';
 
-    // Load initial data
+    // Load data
     loadClasses();
     loadTeachers();
     loadStudents();
-
   } catch(err) {
     document.getElementById('loginError').textContent = err.message;
   }
 }
 
 // LOGOUT
-async function logout() {
-  await auth.signOut();
-
-  const loginPanel = document.getElementById('login-panel');
-  loginPanel.style.display = 'flex'; // must stay flex to stay centered
+async function logoutAdmin() {
+  await schoolAuth.signOut(); // explicitly sign out only School Admin
+  document.getElementById('login-panel').style.display = 'flex';
   document.getElementById('main-panel').style.display = 'none';
-
   document.getElementById('adminEmail').value = '';
   document.getElementById('adminPassword').value = '';
   document.getElementById('loginError').textContent = '';
 }
+
 
 
 
