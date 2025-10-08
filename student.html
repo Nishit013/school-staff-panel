@@ -683,13 +683,13 @@ body {
   </div>
 </div>
 
-<div id="panel-timetable" class="panel" style="display:none;">
+<div id="panel-timetable" class="panel">
   <div id="timetable-section" class="section">
     <h2>📅 My Class Timetable</h2>
 
     <div class="timetable-controls">
-      <label for="studentClass">Class:</label>
-      <select id="studentClass" disabled></select>
+      <label for="studentClassSelect">Class:</label>
+      <select id="studentClassSelect" disabled></select>
     </div>
 
     <div class="timetable-container">
@@ -699,10 +699,8 @@ body {
             <th>Day</th>
             <th>Period 1</th>
             <th>Period 2</th>
-            <th>Break 1</th>
             <th>Period 3</th>
             <th>Period 4</th>
-            <th>Break 2</th>
             <th>Period 5</th>
             <th>Period 6</th>
           </tr>
@@ -712,6 +710,8 @@ body {
     </div>
   </div>
 </div>
+
+
 
 
   <div class="footer-space"></div>
@@ -766,8 +766,9 @@ body {
   }
 
   // ===== SHOW DASHBOARD =====
-  function showDashboard(student) {
-  document.getElementById('loginPanel').style.display = "none";  // hide flex container
+  // ===== SHOW DASHBOARD =====
+function showDashboard(student) {
+  document.getElementById('loginPanel').style.display = "none";  // hide login
   document.getElementById('dashboard').style.display = "block";
 
   document.getElementById('studentName').textContent = student.name;
@@ -776,8 +777,10 @@ body {
 
   currentStudentUid = student.uid;
 
+  // Load attendance
   loadAttendance(student.class, student.uid);
 
+  // Load homework calendar
   if (student.class) {
     loadHomeworkCalendar(student.class);
   } else {
@@ -785,8 +788,26 @@ body {
       "<p>Your class is not assigned yet.</p>";
   }
 
+  // Load student panel
   loadStudentPanel();
+
+  // ===== NEW: Load timetable =====
+  if (student.class) {
+    // Fill class dropdown (read-only)
+    const select = document.getElementById("studentClassSelect");
+    select.innerHTML = `<option value="${student.class}">${student.class}</option>`;
+
+    // Show timetable panel
+    document.getElementById("panel-timetable").style.display = "block";
+
+    // Load timetable from Firebase
+    loadStudentTimetable(student.class);
+  } else {
+    // Hide timetable if no class assigned
+    document.getElementById("panel-timetable").style.display = "none";
+  }
 }
+
 
 
 
@@ -1154,63 +1175,45 @@ async function loadStudentPanel() {
 
 
 const timetableRef = db.ref("timetable");
-const classesRef = db.ref("classes");
 
-// On auth state change (after student login)
-auth.onAuthStateChanged(async user => {
-  if (!user) return;
-
-  // Find student's class
-  const classesSnap = await classesRef.once("value");
-  let foundClass = null;
-
-  classesSnap.forEach(clsSnap => {
-    const students = clsSnap.child("students").val() || {};
-    for (let sid in students) {
-      if (students[sid] === user.displayName) { // if you store student name
-        foundClass = clsSnap.key;
-        break;
-      }
-    }
-  });
-
-  if (!foundClass) {
-    alert("Class not found for this student.");
-    return;
-  }
-
-  document.getElementById("studentClass").value = foundClass;
-  const classOption = document.createElement("option");
-  classOption.value = foundClass;
-  classOption.textContent = foundClass;
-  document.getElementById("studentClass").appendChild(classOption);
-
-  loadStudentTimetable(foundClass);
-});
-
-// Load timetable for that class
-function loadStudentTimetable(cls) {
-  timetableRef.child(cls).on("value", snap => {
+// Load timetable for a given class
+function loadStudentTimetable(className) {
+  timetableRef.child(className).once("value").then(snap => {
     const timetable = snap.val() || {};
     renderStudentTimetable(timetable);
+  }).catch(err => {
+    console.error("Error loading timetable:", err);
+    document.getElementById("timetableBody").innerHTML = "<tr><td colspan='9'>Failed to load timetable.</td></tr>";
   });
 }
 
-// Render read-only timetable
+// Render timetable in the table
 function renderStudentTimetable(timetable) {
   const tbody = document.getElementById("timetableBody");
   tbody.innerHTML = "";
+
   const days = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
   const periods = ["Period1","Period2","Break1","Period3","Period4","Break2","Period5","Period6"];
 
   days.forEach(day => {
     const tr = document.createElement("tr");
     tr.innerHTML = `<td><b>${day}</b></td>`;
+
     periods.forEach(period => {
       const td = document.createElement("td");
-      td.textContent = timetable[day]?.[period] || "-";
+
+      // Add breaks manually if not in Firebase
+      if (period === "Break1" || period === "Break2") {
+        td.textContent = "Break";
+        td.style.fontStyle = "italic";
+        td.style.color = "#888";
+      } else {
+        td.textContent = timetable[day]?.[period] || "-";
+      }
+
       tr.appendChild(td);
     });
+
     tbody.appendChild(tr);
   });
 }
