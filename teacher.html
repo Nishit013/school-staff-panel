@@ -1025,31 +1025,48 @@ function loadTeacherMessages() {
   historyDiv.innerHTML = '';
   const teacherUID = auth.currentUser.uid;
 
-  // Listen for new messages under this student -> teacher
-teacherMessageListener = db.ref(`messages/${currentStudentUid}/${teacherUID}`).on('child_added', async snap => {
-  const msgData = snap.val();
-  let text, senderName, senderRole, timestamp;
-
-  if (typeof msgData === 'string') {
-    text = msgData;
-    timestamp = parseInt(snap.key);
-
-    // Determine role based on teacherUID
-    const teacherUID = auth.currentUser.uid;
-    senderRole = (teacherUID === snap.ref.parent.key) ? "teacher" : "student";
-
-    if (senderRole === "teacher") {
-      const teacherSnap = await db.ref(`users/${teacherUID}`).once('value');
-      senderName = teacherSnap.val().name;
-    } else {
-      senderName = "Student";
-    }
-  } else {
-    text = msgData.text;
-    senderName = msgData.senderName;
-    senderRole = msgData.senderRole;
-    timestamp = msgData.timestamp;
+  // Remove old listener if open again
+  if (teacherMessageListener) {
+    db.ref(`messages/${currentStudentUid}/${teacherUID}`).off('child_added', teacherMessageListener);
   }
+
+  // First, load all messages sorted by timestamp
+  db.ref(`messages/${currentStudentUid}/${teacherUID}`)
+    .orderByChild('timestamp')
+    .once('value', async snap => {
+      historyDiv.innerHTML = '';
+      const msgs = [];
+
+      snap.forEach(childSnap => {
+        const msgData = childSnap.val();
+        if (!msgData) return;
+        msgs.push(msgData);
+      });
+
+      renderMessages(msgs, historyDiv);
+    });
+
+  // Then, listen for **new** messages only
+  teacherMessageListener = db.ref(`messages/${currentStudentUid}/${teacherUID}`)
+    .orderByChild('timestamp')
+    .startAt(Date.now()) // prevents reloading existing ones
+    .on('child_added', snap => {
+      const msgData = snap.val();
+      if (!msgData) return;
+      appendMessage(msgData, historyDiv);
+    });
+}
+
+// ===== Helper: render all messages initially =====
+function renderMessages(msgs, container) {
+  msgs.sort((a, b) => a.timestamp - b.timestamp);
+  msgs.forEach(msgData => appendMessage(msgData, container));
+  container.scrollTop = container.scrollHeight;
+}
+
+// ===== Helper: append a single message =====
+function appendMessage(msgData, container) {
+  const { text, senderName, senderRole, timestamp } = msgData;
 
   const msgDiv = document.createElement('div');
   msgDiv.style.marginBottom = '6px';
@@ -1062,11 +1079,8 @@ teacherMessageListener = db.ref(`messages/${currentStudentUid}/${teacherUID}`).o
   msgDiv.style.alignSelf = senderRole === 'teacher' ? 'flex-start' : 'flex-end';
   msgDiv.innerHTML = `<strong>${senderName}:</strong> ${text}<br><small style="font-size:10px; opacity:0.7;">${new Date(timestamp).toLocaleString()}</small>`;
 
-  historyDiv.appendChild(msgDiv);
-  historyDiv.scrollTop = historyDiv.scrollHeight;
-
-  historyDiv.scrollTop = historyDiv.scrollHeight;
-});
+  container.appendChild(msgDiv);
+  container.scrollTop = container.scrollHeight;
 }
 
 // ===== SEND MESSAGE FROM TEACHER =====
