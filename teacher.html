@@ -341,6 +341,43 @@
 }
 
 
+
+
+/* === DARK THEME FIX FOR SELECT DROPDOWNS === */
+select {
+  background-color: rgba(255, 255, 255, 0.05);
+  color: var(--text);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 15px;
+  appearance: none; /* Removes native arrow in some browsers */
+  cursor: pointer;
+}
+
+/* Custom dropdown arrow */
+select::-ms-expand {
+  display: none;
+}
+
+select:focus {
+  outline: none;
+  box-shadow: 0 0 6px var(--primary);
+}
+
+/* Dropdown options */
+option {
+  background-color: var(--secondary);
+  color: var(--text);
+}
+
+/* Fix for Chrome/Safari options */
+select option:checked,
+select option:hover {
+  background-color: var(--primary-2);
+  color: #fff;
+}
+
 </style>
 </head>
 <body>
