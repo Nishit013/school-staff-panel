@@ -155,61 +155,7 @@ body {
   margin-top:10px;
 }
 
-/* ========== CALENDAR ========== */
-#calendarContainer {
-  display:grid;
-  grid-template-columns:repeat(7,1fr);
-  gap:8px;
-  margin-top:16px;
-  padding:10px;
-  background:var(--surface);
-  border-radius:12px;
-  border:1px solid var(--border);
-  box-shadow:var(--shadow);
-}
 
-.calendar-day {
-  padding:14px 0;
-  border-radius:10px;
-  text-align:center;
-  cursor:pointer;
-  background-color:var(--surface-2);
-  color:var(--text);
-  font-weight:600;
-  font-size:14px;
-  transition:all 0.2s ease;
-  border:1px solid var(--border);
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  flex-direction:column;
-  min-height:50px;
-}
-.calendar-day.today {
-  border:2px solid var(--primary);
-  box-shadow:0 0 8px rgba(0,188,212,0.6);
-}
-.calendar-day.hasHomework {
-  background:var(--primary);
-  color:#fff;
-  font-weight:700;
-  border-color:var(--primary-2);
-}
-.calendar-day:hover {
-  transform:translateY(-2px);
-  box-shadow:0 6px 12px rgba(0,0,0,0.3);
-  background:var(--primary-2);
-  color:#fff;
-}
-.calendar-day.hasHomework::after {
-  content:'';
-  display:block;
-  width:6px;
-  height:6px;
-  border-radius:50%;
-  background:#ffdd57;
-  margin-top:4px;
-}
 
 /* ========== MODAL BASE ========== */
 .modal {
