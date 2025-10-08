@@ -940,12 +940,24 @@ function renderTimetable(timetable) {
     periods.forEach(period => {
       const td = document.createElement("td");
       td.textContent = timetable[day]?.[period] || "-";
-      td.onclick = () => openSubjectModal(day, period);
+
+      // Skip modal opening for breaks
+      if (period !== "Break1" && period !== "Break2") {
+        td.style.cursor = "pointer"; // indicate editable
+        td.onclick = () => openSubjectModal(day, period);
+      } else {
+        td.style.background = "#444";  // make breaks visually distinct
+        td.style.color = "#ccc";
+        td.style.fontStyle = "italic";
+      }
+
       tr.appendChild(td);
     });
+
     tbody.appendChild(tr);
   });
 }
+
 
 // ============== Modal Logic ====================
 function openSubjectModal(day, period) {
