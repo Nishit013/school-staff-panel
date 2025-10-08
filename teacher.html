@@ -343,40 +343,55 @@
 
 
 
-/* === DARK THEME FIX FOR SELECT DROPDOWNS === */
-select {
-  background-color: rgba(255, 255, 255, 0.05);
-  color: var(--text);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 10px;
-  padding: 10px 12px;
+.custom-select {
+  position: relative;
+  width: 200px;
   font-size: 15px;
-  appearance: none; /* Removes native arrow in some browsers */
   cursor: pointer;
 }
 
-/* Custom dropdown arrow */
-select::-ms-expand {
-  display: none;
-}
-
-select:focus {
-  outline: none;
-  box-shadow: 0 0 6px var(--primary);
-}
-
-/* Dropdown options */
-option {
-  background-color: var(--secondary);
+.custom-select .selected {
+  background: var(--surface-2);
   color: var(--text);
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
-/* Fix for Chrome/Safari options */
-select option:checked,
-select option:hover {
-  background-color: var(--primary-2);
+.custom-select .options {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  background: var(--surface-2);
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  margin-top: 5px;
+  z-index: 10;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.custom-select.active .options {
+  display: block;
+}
+
+.custom-select .option {
+  padding: 10px;
+  color: var(--text);
+  transition: 0.2s background;
+}
+
+.custom-select .option:hover {
+  background: var(--primary-2);
   color: #fff;
 }
+
 
 </style>
 </head>
@@ -452,6 +467,14 @@ select option:hover {
       <button class="btn" onclick="downloadCSV()">⬇️ Export CSV</button>
     </div>
 
+<div class="custom-select" id="classDropdown">
+  <div class="selected">Select Class</div>
+  <div class="options">
+    <div class="option" data-value="Class 1">Class 1</div>
+    <div class="option" data-value="Class 2">Class 2</div>
+    <div class="option" data-value="Class 3">Class 3</div>
+  </div>
+</div>
 
     <!-- Add Students -->
 <div class="section">
@@ -593,15 +616,36 @@ if(classNames.length){
     }
 
     // ==== Class select ====
-    async function onClassSelect(classId){
-      if(!classId) return;
-      assignedClass = classId;
-      document.getElementById('className').textContent = classId;
-      tempAttendance = {};
-      await loadStudents(classId);
-      attachAttendanceListener();
-      refreshAnalytics();
-    }
+    const dropdown = document.getElementById('classDropdown');
+const selected = dropdown.querySelector('.selected');
+const options = dropdown.querySelectorAll('.option');
+
+selected.addEventListener('click', () => {
+  dropdown.classList.toggle('active');
+});
+
+options.forEach(option => {
+  option.addEventListener('click', async () => {
+    const classId = option.dataset.value;
+    selected.textContent = classId;
+    dropdown.classList.remove('active');
+
+    // Your existing logic
+    if (!classId) return;
+    assignedClass = classId;
+    document.getElementById('className').textContent = classId;
+    tempAttendance = {};
+    await loadStudents(classId);
+    attachAttendanceListener();
+    refreshAnalytics();
+  });
+});
+
+// Optional: close dropdown when clicking outside
+document.addEventListener('click', (e) => {
+  if (!dropdown.contains(e.target)) dropdown.classList.remove('active');
+});
+
 
     // ==== Load students + build cards ====
     async function loadStudents(classId) {
