@@ -602,6 +602,18 @@ body {
   text-align: center;
 }
 
+#timetableTable td {
+  padding: 10px;
+  border: 1px solid rgba(255,255,255,0.1);
+  text-align: center;
+}
+
+#timetableTable td:nth-child(4),
+#timetableTable td:nth-child(7) {
+  background: #444;
+  color: #ccc;
+  font-style: italic;
+}
 
 
 </style>
@@ -710,19 +722,22 @@ body {
 
     <div class="timetable-container">
       <table id="timetableTable">
-        <thead>
-          <tr>
-            <th>Day</th>
-            <th>Period 1</th>
-            <th>Period 2</th>
-            <th>Period 3</th>
-            <th>Period 4</th>
-            <th>Period 5</th>
-            <th>Period 6</th>
-          </tr>
-        </thead>
-        <tbody id="timetableBody"></tbody>
-      </table>
+  <thead>
+    <tr>
+      <th>Day</th>
+      <th>Period 1</th>
+      <th>Period 2</th>
+      <th>Break</th>
+      <th>Period 3</th>
+      <th>Period 4</th>
+      <th>Break</th>
+      <th>Period 5</th>
+      <th>Period 6</th>
+    </tr>
+  </thead>
+  <tbody id="timetableBody"></tbody>
+</table>
+
     </div>
   </div>
 </div>
@@ -1209,26 +1224,32 @@ function renderStudentTimetable(timetable) {
   tbody.innerHTML = "";
 
   const days = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
-  const periods = ["Period1","Period2","Period3","Period4","Period5","Period6"];
 
   days.forEach(day => {
     const dayData = timetable[day] || {};
-
     const tr = document.createElement("tr");
+
     tr.innerHTML = `<td><b>${day}</b></td>`;
 
-    periods.forEach(period => {
-      const td = document.createElement("td");
-      td.textContent = dayData[period] || "-";
-      tr.appendChild(td);
-    });
+    // Period 1 & 2
+    tr.innerHTML += `<td>${dayData["Period1"] || "-"}</td>`;
+    tr.innerHTML += `<td>${dayData["Period2"] || "-"}</td>`;
+
+    // Break column
+    tr.innerHTML += `<td style="background:#444; color:#ccc; font-style:italic;">Break</td>`;
+
+    // Period 3 & 4
+    tr.innerHTML += `<td>${dayData["Period3"] || "-"}</td>`;
+    tr.innerHTML += `<td>${dayData["Period4"] || "-"}</td>`;
+
+    // Break column
+    tr.innerHTML += `<td style="background:#444; color:#ccc; font-style:italic;">Break</td>`;
+
+    // Period 5 & 6
+    tr.innerHTML += `<td>${dayData["Period5"] || "-"}</td>`;
+    tr.innerHTML += `<td>${dayData["Period6"] || "-"}</td>`;
 
     tbody.appendChild(tr);
-
-    // Add a break row after Period 2 and Period 4
-    const breakRow = document.createElement("tr");
-    breakRow.innerHTML = `<td colspan="7" style="background:#444; color:#ccc; font-style:italic;">Break</td>`;
-    tbody.insertBefore(breakRow, tr.nextSibling);
   });
 }
 
