@@ -585,6 +585,22 @@ body {
   opacity: 0.7;
   cursor: not-allowed;
 }
+#timetableTable td, #timetableTable th {
+  padding: 12px;
+  border: 1px solid rgba(255,255,255,0.1);
+  text-align: center;
+}
+
+#timetableTable tr:nth-child(even) {
+  background: rgba(255,255,255,0.03);
+}
+
+#timetableTable tr.break-row td {
+  background: #333;
+  color: #aaa;
+  font-style: italic;
+  text-align: center;
+}
 
 
 
@@ -1193,30 +1209,29 @@ function renderStudentTimetable(timetable) {
   tbody.innerHTML = "";
 
   const days = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
-  const periods = ["Period1","Period2","Break1","Period3","Period4","Break2","Period5","Period6"];
+  const periods = ["Period1","Period2","Period3","Period4","Period5","Period6"];
 
   days.forEach(day => {
+    const dayData = timetable[day] || {};
+
     const tr = document.createElement("tr");
     tr.innerHTML = `<td><b>${day}</b></td>`;
 
     periods.forEach(period => {
       const td = document.createElement("td");
-
-      // Add breaks manually if not in Firebase
-      if (period === "Break1" || period === "Break2") {
-        td.textContent = "Break";
-        td.style.fontStyle = "italic";
-        td.style.color = "#888";
-      } else {
-        td.textContent = timetable[day]?.[period] || "-";
-      }
-
+      td.textContent = dayData[period] || "-";
       tr.appendChild(td);
     });
 
     tbody.appendChild(tr);
+
+    // Add a break row after Period 2 and Period 4
+    const breakRow = document.createElement("tr");
+    breakRow.innerHTML = `<td colspan="7" style="background:#444; color:#ccc; font-style:italic;">Break</td>`;
+    tbody.insertBefore(breakRow, tr.nextSibling);
   });
 }
+
 
 
   </script>
