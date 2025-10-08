@@ -31,14 +31,21 @@ body {
 
 /* Login Panel */
 /* Admin Login Panel */
+/* Outer login container that centers the card */
 #login-panel {
-  display: flex;                  /* keep flex for centering */
-  justify-content: center;
-  align-items: center;
-  height: 100vh;                  /* full viewport height */
-  background: var(--bg);
+  display: flex;               /* Flex container */
+  justify-content: center;     /* Horizontal center */
+  align-items: center;         /* Vertical center */
+  height: 100vh;               /* Full viewport height */
+  width: 100%;                 /* Full width */
+  position: fixed;             /* Stay on top */
+  top: 0;
+  left: 0;
+  background: var(--bg);       /* Optional: page background */
+  z-index: 999;                /* Above other content */
 }
 
+/* Inner card */
 .login-card {
   background: var(--card);
   border: 1px solid var(--border);
@@ -527,14 +534,16 @@ async function adminLogin() {
 // LOGOUT
 async function logout() {
   await auth.signOut();
-  // Show login panel centered
+
   const loginPanel = document.getElementById('login-panel');
-  loginPanel.style.display = 'flex';    // keep it flex to stay centered
+  loginPanel.style.display = 'flex';  // must stay flex to center
   document.getElementById('main-panel').style.display = 'none';
+
   document.getElementById('adminEmail').value = '';
   document.getElementById('adminPassword').value = '';
   document.getElementById('loginError').textContent = '';
 }
+
 
 
   // Show selected panel
