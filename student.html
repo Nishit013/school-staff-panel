@@ -403,12 +403,19 @@ body {
 
 
 /* LOGIN PANEL STYLING */
+/* Always center login panel */
 .login-container {
-  display: flex;
+  position: fixed;     /* fixed to viewport */
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;       /* flex centering */
   justify-content: center;
   align-items: center;
-  height: 100vh;
   background: var(--bg);
+  z-index: 9999;       /* on top of everything */
+  transition: opacity 0.3s ease;
 }
 
 .login-card {
