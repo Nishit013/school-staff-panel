@@ -341,58 +341,6 @@
 }
 
 
-
-
-.custom-select {
-  position: relative;
-  width: 200px;
-  font-size: 15px;
-  cursor: pointer;
-}
-
-.custom-select .selected {
-  background: var(--surface-2);
-  color: var(--text);
-  padding: 10px 12px;
-  border-radius: 10px;
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.custom-select .options {
-  display: none;
-  position: absolute;
-  top: 100%;
-  left: 0;
-  width: 100%;
-  background: var(--surface-2);
-  border-radius: 10px;
-  border: 1px solid var(--border);
-  margin-top: 5px;
-  z-index: 10;
-  max-height: 200px;
-  overflow-y: auto;
-}
-
-.custom-select.active .options {
-  display: block;
-}
-
-.custom-select .option {
-  padding: 10px;
-  color: var(--text);
-  transition: 0.2s background;
-}
-
-.custom-select .option:hover {
-  background: var(--primary-2);
-  color: #fff;
-}
-
-
 </style>
 </head>
 <body>
@@ -467,14 +415,6 @@
       <button class="btn" onclick="downloadCSV()">⬇️ Export CSV</button>
     </div>
 
-<div class="custom-select" id="classDropdown">
-  <div class="selected">Select Class</div>
-  <div class="options">
-    <div class="option" data-value="Class 1">Class 1</div>
-    <div class="option" data-value="Class 2">Class 2</div>
-    <div class="option" data-value="Class 3">Class 3</div>
-  </div>
-</div>
 
     <!-- Add Students -->
 <div class="section">
@@ -616,36 +556,15 @@ if(classNames.length){
     }
 
     // ==== Class select ====
-    const dropdown = document.getElementById('classDropdown');
-const selected = dropdown.querySelector('.selected');
-const options = dropdown.querySelectorAll('.option');
-
-selected.addEventListener('click', () => {
-  dropdown.classList.toggle('active');
-});
-
-options.forEach(option => {
-  option.addEventListener('click', async () => {
-    const classId = option.dataset.value;
-    selected.textContent = classId;
-    dropdown.classList.remove('active');
-
-    // Your existing logic
-    if (!classId) return;
-    assignedClass = classId;
-    document.getElementById('className').textContent = classId;
-    tempAttendance = {};
-    await loadStudents(classId);
-    attachAttendanceListener();
-    refreshAnalytics();
-  });
-});
-
-// Optional: close dropdown when clicking outside
-document.addEventListener('click', (e) => {
-  if (!dropdown.contains(e.target)) dropdown.classList.remove('active');
-});
-
+    async function onClassSelect(classId){
+      if(!classId) return;
+      assignedClass = classId;
+      document.getElementById('className').textContent = classId;
+      tempAttendance = {};
+      await loadStudents(classId);
+      attachAttendanceListener();
+      refreshAnalytics();
+    }
 
     // ==== Load students + build cards ====
     async function loadStudents(classId) {
