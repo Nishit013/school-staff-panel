@@ -515,6 +515,79 @@ body {
   margin-top: 10px;
 }
 
+
+
+
+
+/* Same timetable styles reused */
+.section {
+  margin: 40px auto;
+  padding: 20px;
+  width: 95%;
+  background: var(--surface, #1b1f32);
+  color: white;
+  border-radius: 16px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.3);
+}
+
+.section h2 {
+  text-align: center;
+  font-size: 1.6em;
+  color: var(--primary, #00bcd4);
+  margin-bottom: 20px;
+}
+
+.timetable-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 20px;
+  gap: 10px;
+}
+
+.timetable-controls select {
+  padding: 8px 15px;
+  background: #222846;
+  color: #fff;
+  border: 1px solid #444;
+  border-radius: 8px;
+  outline: none;
+}
+
+#timetableTable {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+#timetableTable th, #timetableTable td {
+  padding: 10px;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+#timetableTable th {
+  background: var(--primary, #00bcd4);
+  color: white;
+  font-weight: 600;
+}
+
+#timetableTable td {
+  transition: background 0.2s;
+}
+
+#timetableTable td:hover {
+  background: rgba(0,188,212,0.1);
+}
+
+/* Disabled dropdown */
+#studentClass[disabled] {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+
+
 </style>
 </head>
 <body>
@@ -610,6 +683,35 @@ body {
   </div>
 </div>
 
+<div id="panel-timetable" class="panel" style="display:none;">
+  <div id="timetable-section" class="section">
+    <h2>📅 My Class Timetable</h2>
+
+    <div class="timetable-controls">
+      <label for="studentClass">Class:</label>
+      <select id="studentClass" disabled></select>
+    </div>
+
+    <div class="timetable-container">
+      <table id="timetableTable">
+        <thead>
+          <tr>
+            <th>Day</th>
+            <th>Period 1</th>
+            <th>Period 2</th>
+            <th>Break 1</th>
+            <th>Period 3</th>
+            <th>Period 4</th>
+            <th>Break 2</th>
+            <th>Period 5</th>
+            <th>Period 6</th>
+          </tr>
+        </thead>
+        <tbody id="timetableBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
 
 
   <div class="footer-space"></div>
@@ -1048,6 +1150,70 @@ async function loadStudentPanel() {
     .addEventListener("click", sendMessageToTeacher);
 }
 
+
+
+
+const timetableRef = db.ref("timetable");
+const classesRef = db.ref("classes");
+
+// On auth state change (after student login)
+auth.onAuthStateChanged(async user => {
+  if (!user) return;
+
+  // Find student's class
+  const classesSnap = await classesRef.once("value");
+  let foundClass = null;
+
+  classesSnap.forEach(clsSnap => {
+    const students = clsSnap.child("students").val() || {};
+    for (let sid in students) {
+      if (students[sid] === user.displayName) { // if you store student name
+        foundClass = clsSnap.key;
+        break;
+      }
+    }
+  });
+
+  if (!foundClass) {
+    alert("Class not found for this student.");
+    return;
+  }
+
+  document.getElementById("studentClass").value = foundClass;
+  const classOption = document.createElement("option");
+  classOption.value = foundClass;
+  classOption.textContent = foundClass;
+  document.getElementById("studentClass").appendChild(classOption);
+
+  loadStudentTimetable(foundClass);
+});
+
+// Load timetable for that class
+function loadStudentTimetable(cls) {
+  timetableRef.child(cls).on("value", snap => {
+    const timetable = snap.val() || {};
+    renderStudentTimetable(timetable);
+  });
+}
+
+// Render read-only timetable
+function renderStudentTimetable(timetable) {
+  const tbody = document.getElementById("timetableBody");
+  tbody.innerHTML = "";
+  const days = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+  const periods = ["Period1","Period2","Break1","Period3","Period4","Break2","Period5","Period6"];
+
+  days.forEach(day => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td><b>${day}</b></td>`;
+    periods.forEach(period => {
+      const td = document.createElement("td");
+      td.textContent = timetable[day]?.[period] || "-";
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  });
+}
 
 
   </script>
