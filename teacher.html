@@ -354,7 +354,7 @@
     <div class="nav-actions">
       <button class="btn ghost" id="themeToggle" title="Toggle theme">🌓</button>
       <div class="chip" id="teacherChip">👩‍🏫 <span id="teacherName">—</span></div>
-      <button class="btn danger" onclick="logoutTeacher()">Logout</button>
+      <button class="btn danger" onclick="logout()">Logout</button>
     </div>
   </div>
 
@@ -476,8 +476,6 @@
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.database();
-const teacherAuth = firebase.auth();
-const teacherDb = firebase.database();
 
     // ==== State ====
     let assignedClass = "";
@@ -498,64 +496,46 @@ const teacherDb = firebase.database();
     };
 
     // ==== Auth & bootstrap ====
-// Create named app instance for Teacher Panel
+    auth.onAuthStateChanged(async user => {
+      if(!user){ window.location.href="index.html"; return; }
+      const snap = await db.ref("users/"+user.uid).once("value");
+      const u = snap.val();
+      if(!u || u.role!=="teacher"){ alert("Access denied."); window.location.href="index.html"; return; }
+      document.getElementById("teacherName").textContent = u.name || "(unknown)";
 
-// Protect teacher panel
-teacherAuth.onAuthStateChanged(async user => {
-  if (!user) {
-    window.location.href = "index.html"; // teacher login
-    return;
-  }
+      // Set default date = today
+      const dateEl = document.getElementById('attendanceDate');
+      dateEl.value = todayISO();
 
-  const snap = await teacherDb.ref("users/" + user.uid).once("value");
-  const u = snap.val();
-  if (!u || u.role !== "teacher") {
-    alert("Access denied.");
-    window.location.href = "index.html";
-    return;
-  }
+      // Load teacher's classes
+      const classesSnap = await db.ref("classes").once("value");
 
-  document.getElementById("teacherName").textContent = u.name || "(unknown)";
+      const classes = classesSnap.val() || {};
+      const classNames = Object.keys(classes);
+      const sel = document.getElementById('classSelector');
+      sel.innerHTML = classNames.length ? '<option value="">— Select —</option>' : '<option value="">No classes yet</option>';
+      classNames.forEach(cid=>{
+        const o = document.createElement('option'); o.value = cid; o.textContent = cid; sel.appendChild(o);
+      });
 
-  // Set default date = today
-  const dateEl = document.getElementById('attendanceDate');
-  dateEl.value = todayISO();
-
-  // Load teacher's classes
-  const classesSnap = await teacherDb.ref("classes").once("value"); // <-- use teacherDb
-  const classes = classesSnap.val() || {};
-  const classNames = Object.keys(classes);
-  const sel = document.getElementById('classSelector');
-  sel.innerHTML = classNames.length ? '<option value="">— Select —</option>' : '<option value="">No classes yet</option>';
-  classNames.forEach(cid => {
-    const o = document.createElement('option'); 
-    o.value = cid; 
-    o.textContent = cid; 
-    sel.appendChild(o);
-  });
-
-  // Auto-select last class (if any)
-  if(classNames.length){
+      // Auto-select last class (if any)
+      // Auto-select last class (if any)
+if(classNames.length){
     assignedClass = classNames[classNames.length-1];
     sel.value = assignedClass;
     document.getElementById('className').textContent = assignedClass;
 
-    await loadStudents(assignedClass);       // make sure this function uses teacherDb
-    attachAttendanceListener();              // live updates for the date
-    refreshAnalytics();                      // fill KPI + summary + sparkline
-    await loadSubjectsForHomework();         // load homework subjects automatically
-  } else {
-    document.getElementById('studentContainer').innerHTML = '<div class="mini">Create a class to begin.</div>';
-  }
-});
+    await loadStudents(assignedClass);
+    attachAttendanceListener(); // live updates for the date
+    refreshAnalytics();         // fill KPI + summary + sparkline
 
-// Teacher logout
-function logoutTeacher() {
-  teacherAuth.signOut().then(() => {
-    location.href = "./index.html"; // redirect only teacher panel
-  });
+    // 🔹 Load homework subjects automatically for this class
+    await loadSubjectsForHomework();
 }
-
+ else {
+        document.getElementById('studentContainer').innerHTML = '<div class="mini">Create a class to begin.</div>';
+      }
+    });
 
     // ==== Live listener for selected date ====
     function attachAttendanceListener(){
@@ -1127,7 +1107,7 @@ async function sendTeacherMessage() {
   msgInput.value = '';
 }
 
-    
-    </script>
+    function logout(){ auth.signOut().then(()=>location.href="./index.html"); }
+  </script>
 </body>
 </html>
