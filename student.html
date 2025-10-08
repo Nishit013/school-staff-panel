@@ -344,93 +344,115 @@ body {
 
 
 
-/* calendar header & grid */
-#calendarContainer .calendar-header{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:10px;
-  margin-bottom:8px;
-  padding:6px 4px;
-}
-#calendarContainer .calendar-header .month-label{
-  font-weight:700;
-  color:var(--primary);
-}
-#calendarContainer .calendar-header .cal-nav{
-  background:transparent;
-  border:none;
-  color:var(--text);
-  font-size:20px;
-  cursor:pointer;
-  padding:4px 8px;
-  border-radius:6px;
-}
-#calendarContainer .calendar-header .cal-nav:hover{
-  background:rgba(255,255,255,0.03);
+/* === Calendar Header === */
+#calendarContainer .calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 12px;
 }
 
-/* weekday row */
-#calendarContainer .calendar-weekdays{
-  display:grid;
-  grid-template-columns:repeat(7,1fr);
-  gap:8px;
-  margin-bottom:6px;
-}
-#calendarContainer .calendar-weekdays .weekday{
-  text-align:center;
-  font-size:12px;
-  color:var(--muted);
-  font-weight:700;
+#calendarContainer .calendar-header .month-label {
+  font-weight: 700;
+  color: var(--primary);
+  font-size: 1.1rem;
 }
 
-/* grid */
-#calendarContainer .calendar-grid{
-  display:grid;
-  grid-template-columns:repeat(7,1fr);
-  gap:8px;
+#calendarContainer .calendar-header .cal-nav {
+  background: transparent;
+  border: none;
+  color: var(--primary);
+  font-size: 22px;
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: 8px;
+  transition: background 0.2s;
 }
 
-/* other-month (muted) */
-#calendarContainer .calendar-other{
-  padding:10px;
-  border-radius:10px;
-  text-align:center;
-  color:var(--muted);
-  background:transparent;
-  border:1px solid transparent;
+#calendarContainer .calendar-header .cal-nav:hover {
+  background: rgba(0, 188, 212, 0.15);
 }
 
-/* day cells (will inherit your .calendar-day styles, override small things) */
-#calendarContainer .calendar-day{
-  padding:10px;
-  border-radius:10px;
-  text-align:center;
-  background:var(--surface-2);
-  border:1px solid var(--border);
-  cursor:pointer;
-  display:flex;
-  align-items:flex-start;
-  justify-content:flex-start;
-  min-height:56px;
-}
-#calendarContainer .calendar-day .day-num{
-  font-weight:700;
-  width:100%;
-  text-align:right;
-  color:var(--text);
+/* === Weekday Row === */
+#calendarContainer .calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 10px;
+  margin-bottom: 6px;
+  text-align: center;
 }
 
-/* today/hasHomework */
-#calendarContainer .calendar-day.today{
-  border:2px solid var(--primary);
-  box-shadow:0 6px 16px rgba(0,188,212,0.08);
+#calendarContainer .calendar-weekdays .weekday {
+  font-size: 14px;
+  font-weight: 600;
+  color: #aaa;
 }
-#calendarContainer .calendar-day.hasHomework{
-  background:linear-gradient(135deg,var(--primary),var(--primary-2));
-  color:#fff;
-  border-color:var(--primary-2);
+
+/* === Calendar Grid === */
+#calendarContainer .calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 10px;
 }
+
+/* === Calendar Cells === */
+#calendarContainer .calendar-day,
+#calendarContainer .calendar-other {
+  position: relative;
+  border-radius: 12px;
+  text-align: center;
+  min-height: 80px; /* bigger size */
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding: 8px;
+  font-size: 15px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: transform 0.15s ease, background 0.2s ease;
+}
+
+#calendarContainer .calendar-day:hover {
+  transform: scale(1.05);
+  background: rgba(0, 188, 212, 0.15);
+}
+
+/* Previous/Next month muted days */
+#calendarContainer .calendar-other {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+/* Day numbers */
+#calendarContainer .calendar-day .day-num {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-weight: 600;
+}
+
+/* Today highlight */
+#calendarContainer .calendar-day.today {
+  border: 2px solid var(--primary);
+  box-shadow: 0 0 10px rgba(0, 188, 212, 0.4);
+}
+
+/* Homework highlight */
+#calendarContainer .calendar-day.hasHomework {
+  background: linear-gradient(135deg, var(--primary), var(--primary-2));
+  color: #fff;
+  border: none;
+}
+
+/* Optional: small homework dot indicator */
+#calendarContainer .calendar-day.hasHomework::after {
+  content: "•";
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  font-size: 22px;
+  color: #ffeb3b;
+}
+
 
 
 </style>
